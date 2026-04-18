@@ -17,8 +17,14 @@ const { catalogProducts, cities, components, priceBandOptions, quoteTypes } = pr
 const initialCustomSelections = components.map((component) => ({ component, count: 0 }))
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
+const themeOptions = [
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
+  { id: 'night', label: 'Night' },
+]
 
 function App() {
+  const [theme, setTheme] = useState(() => window.localStorage.getItem('bouquet-theme') || 'light')
   const [city, setCity] = useState(cities[0].id)
   const [quoteType, setQuoteType] = useState(quoteTypes[0].id)
   const [selectedCatalogId, setSelectedCatalogId] = useState(catalogProducts[0].id)
@@ -86,13 +92,33 @@ function App() {
     )
   }, [city])
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    window.localStorage.setItem('bouquet-theme', theme)
+  }, [theme])
+
   return (
     <div className="app-shell">
       <header className="hero-card stack-gap compact">
-        <div>
-          <p className="eyebrow">Internal MVP</p>
-          <h1>Bloomfield bouquet calculator</h1>
-          <p className="muted">Catalogue and custom quoting, centered on Lagos and Abuja pricing with Bloomfield sheet-backed custom flower rates.</p>
+        <div className="hero-header-row">
+          <div>
+            <p className="eyebrow">Internal MVP</p>
+            <h1>Bloomfield bouquet calculator</h1>
+            <p className="muted">Catalogue and custom quoting, centered on Lagos and Abuja pricing with Bloomfield sheet-backed custom flower rates.</p>
+          </div>
+
+          <div className="theme-switcher" role="group" aria-label="Theme switcher">
+            {themeOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`theme-chip ${theme === option.id ? 'theme-chip-active' : ''}`}
+                onClick={() => setTheme(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -323,51 +349,73 @@ function App() {
       </main>
 
       <section className="panel stack-gap source-footer">
-        <div>
-          <h2>Pricing sources</h2>
-          <p className="muted small">Key pricing and image mapping references, kept compact for quick verification.</p>
+        <div className="footer-header-row">
+          <div>
+            <p className="eyebrow">Internal references</p>
+            <h2>Pricing confidence</h2>
+            <p className="muted small">Cleaner by default, with source details tucked away unless someone needs to audit the quote logic.</p>
+          </div>
+
+          <div className="chip-row">
+            {cities.map((item) => {
+              const loadedCount = marketOverrideStatus[item.id]
+              return (
+                <span key={item.id} className="chip subtle-chip">
+                  {item.label}: {loadedCount || 0} override{loadedCount === 1 ? '' : 's'}
+                </span>
+              )
+            })}
+          </div>
         </div>
 
         <div className="field-grid two-up">
           <div className="schema-card stack-gap compact">
             <div>
-              <strong>Data sources</strong>
-              <p className="muted small">Retail samples, market overrides, and the custom flower sheet feed this calculator.</p>
+              <strong>What powers the quote</strong>
+              <p className="muted small">Catalog sample pricing, market overrides, and the Bloomfield custom flower sheet are all feeding this calculator.</p>
             </div>
-            <p className="muted small code-inline">Catalog sample: /home/chizzy/.openclaw/workspace/bloomfield-flowers-site/src/main.js</p>
-            <p className="muted small code-inline">Market overrides: src/data/sources/marketOverrides.import.json</p>
-            <p className="muted small code-inline">Custom flower sheet: {customFlowerPriceSource.sheetName}</p>
+            <div className="compact-bullet-list muted small">
+              <p>Custom flower sheet: <strong>{customFlowerPriceSource.sheetName}</strong></p>
+              <p>Retail samples backfill where direct market pricing is missing</p>
+              <p>Override pricing wins whenever confirmed Lagos or Abuja rates exist</p>
+            </div>
           </div>
 
           <div className="schema-card stack-gap compact">
             <div>
-              <strong>Override coverage</strong>
-              <p className="muted small">Confirmed market overrides still win, with retail prices only used as fallback.</p>
+              <strong>What still needs polish</strong>
+              <p className="muted small">This keeps the UI honest without dumping every raw source card into the main experience.</p>
             </div>
-            <div className="chip-row">
-              {cities.map((item) => {
-                const loadedCount = marketOverrideStatus[item.id]
-                return (
-                  <span key={item.id} className="chip subtle-chip">
-                    {item.label}: {loadedCount || 0} override{loadedCount === 1 ? '' : 's'}
-                  </span>
-                )
-              })}
+            <div className="compact-bullet-list muted small">
+              <p>Some catalog bouquets still rely on fallback retail sample bands</p>
+              <p>Customer-facing mode should eventually hide internal audit language completely</p>
+              <p>Quote export can be upgraded into a more polished WhatsApp-ready output</p>
             </div>
           </div>
         </div>
 
-        <div className="stack-gap compact">
-          {catalogProducts.map((product) => (
-            <div key={product.id} className="schema-card stack-gap compact source-item-card">
-              <div className="summary-row">
-                <strong>{product.name}</strong>
-                <span className="muted small">{product.sku}</span>
-              </div>
-              <p className="muted small"><strong>Image:</strong> {product.imageSource}</p>
+        <details className="details-panel">
+          <summary>Show technical source details</summary>
+          <div className="stack-gap compact details-content">
+            <div className="schema-card stack-gap compact">
+              <p className="muted small code-inline">Catalog sample: /home/chizzy/.openclaw/workspace/bloomfield-flowers-site/src/main.js</p>
+              <p className="muted small code-inline">Market overrides: src/data/sources/marketOverrides.import.json</p>
+              <p className="muted small code-inline">Custom flower sheet: {customFlowerPriceSource.sheetName}</p>
             </div>
-          ))}
-        </div>
+
+            <div className="stack-gap compact">
+              {catalogProducts.map((product) => (
+                <div key={product.id} className="schema-card stack-gap compact source-item-card">
+                  <div className="summary-row">
+                    <strong>{product.name}</strong>
+                    <span className="muted small">{product.sku}</span>
+                  </div>
+                  <p className="muted small"><strong>Image:</strong> {product.imageSource}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
       </section>
     </div>
   )
