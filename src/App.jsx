@@ -31,6 +31,9 @@ function App() {
   const [quantity, setQuantity] = useState(1)
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [discountPercent, setDiscountPercent] = useState(0)
+  const [customerName, setCustomerName] = useState('')
+  const [recipientName, setRecipientName] = useState('')
+  const [occasion, setOccasion] = useState('')
   const [customSelections, setCustomSelections] = useState(initialCustomSelections)
 
   const selectedCatalog = catalogProducts.find((item) => item.id === selectedCatalogId)
@@ -55,20 +58,30 @@ function App() {
   )
 
   const quoteText = useMemo(() => {
-    const lines = [
-      'Bloomfield Quote',
-      `City: ${summary.city}`,
-      `Type: ${quoteType === 'catalog' ? 'Catalog bouquet' : 'Custom bouquet'}`,
+    const introLines = [
+      '🌸 *Bloomfield Flowers Quote*',
+      customerName ? `Hello ${customerName},` : 'Hello,',
       '',
-      ...summary.lineItems.map((item) => `• ${item.label}: ${item.detail} = ${formatCurrency(item.amount)}`),
+      `*City:* ${summary.city}`,
+      `*Type:* ${quoteType === 'catalog' ? 'Catalog bouquet' : 'Custom bouquet'}`,
+      recipientName ? `*Recipient:* ${recipientName}` : null,
+      occasion ? `*Occasion:* ${occasion}` : null,
+    ].filter(Boolean)
+
+    const itemLines = summary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
+
+    const totalLines = [
       '',
-      `Subtotal: ${formatCurrency(summary.subtotal)}`,
-      ...summary.adjustments.map((item) => `${item.label}: ${formatCurrency(item.amount)}`),
-      `Total: ${formatCurrency(summary.total)}`,
-      'Valid for 24 hours subject to flower availability.',
+      `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
+      ...summary.adjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
+      `*Total:* ${formatCurrency(summary.total)}`,
+      '',
+      'Valid for 24 hours, subject to flower availability.',
+      'Thank you for choosing Bloomfield Flowers 💐',
     ]
-    return lines.join('\n')
-  }, [quoteType, summary])
+
+    return [...introLines, '', ...itemLines, ...totalLines].join('\n')
+  }, [customerName, occasion, quoteType, recipientName, summary])
 
   async function copyQuote() {
     try {
@@ -336,6 +349,24 @@ function App() {
           </div>
 
           <div className="stack-gap compact">
+            <h3>Customer details</h3>
+            <div className="field-grid two-up">
+              <label>
+                <span>Customer name</span>
+                <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Chikezie" />
+              </label>
+              <label>
+                <span>Recipient</span>
+                <input value={recipientName} onChange={(event) => setRecipientName(event.target.value)} placeholder="Tosin" />
+              </label>
+            </div>
+            <label>
+              <span>Occasion</span>
+              <input value={occasion} onChange={(event) => setOccasion(event.target.value)} placeholder="Birthday bouquet" />
+            </label>
+          </div>
+
+          <div className="stack-gap compact">
             <h3>Adjustments</h3>
             <div className="field-grid two-up">
               <label>
@@ -367,7 +398,7 @@ function App() {
             </div>
           )}
 
-          <button className="primary-button" onClick={copyQuote}>Copy customer quote</button>
+          <button className="primary-button" onClick={copyQuote}>Copy WhatsApp-ready quote</button>
 
           <label>
             <span>Preview text</span>
