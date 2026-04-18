@@ -112,6 +112,39 @@ textarea {
   gap: 16px;
 }
 
+.stem-copy {
+  flex: 1;
+}
+
+.stem-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 170px;
+}
+
+.stem-controls input {
+  text-align: center;
+}
+
+.step-button {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.step-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .stem-card {
   background: var(--surface-soft);
   border: 1px solid var(--border);
@@ -421,6 +454,11 @@ textarea {
   .stem-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .stem-controls {
+    width: 100%;
+    min-width: 0;
   }
 
   .stem-card input {

@@ -13,7 +13,7 @@ import {
 } from './lib/pricing'
 
 const { catalogProducts, cities, components, priceBandOptions, quoteTypes } = pricingCatalog
-const initialCustomSelections = components.map((component) => ({ component, count: 0 }))
+const initialCustomSelections = components.map((component) => ({ component, count: 0, inputValue: '' }))
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
 const themeOptions = [
@@ -25,7 +25,7 @@ const themeOptions = [
 function App() {
   const [theme, setTheme] = useState(() => window.localStorage.getItem('bouquet-theme') || 'light')
   const [city, setCity] = useState(cities[0].id)
-  const [quoteType, setQuoteType] = useState(quoteTypes[0].id)
+  const [quoteType, setQuoteType] = useState('custom')
   const [selectedCatalogId, setSelectedCatalogId] = useState(catalogProducts[0].id)
   const [band, setBand] = useState('standard')
   const [quantity, setQuantity] = useState(1)
@@ -79,15 +79,38 @@ function App() {
     }
   }
 
-  function updateStemCount(id, count) {
+  function updateStemCount(id, rawValue) {
     setCustomSelections((current) =>
-      current.map((entry) => (entry.component.id === id ? { ...entry, count: Number(count) || 0 } : entry)),
+      current.map((entry) => {
+        if (entry.component.id !== id) return entry
+
+        if (rawValue === '') {
+          return { ...entry, inputValue: '', count: 0 }
+        }
+
+        const nextCount = Math.max(0, Number(rawValue) || 0)
+        return { ...entry, inputValue: String(rawValue), count: nextCount }
+      }),
+    )
+  }
+
+  function bumpStemCount(id, delta) {
+    setCustomSelections((current) =>
+      current.map((entry) => {
+        if (entry.component.id !== id) return entry
+        const nextCount = Math.max(0, (entry.count || 0) + delta)
+        return {
+          ...entry,
+          count: nextCount,
+          inputValue: nextCount === 0 ? '' : String(nextCount),
+        }
+      }),
     )
   }
 
   useEffect(() => {
     setCustomSelections((current) =>
-      current.map((entry) => (entry.component.prices?.[city] ? entry : { ...entry, count: 0 })),
+      current.map((entry) => (entry.component.prices?.[city] ? entry : { ...entry, count: 0, inputValue: '' })),
     )
   }, [city])
 
@@ -240,20 +263,26 @@ function App() {
 
                   return (
                     <div key={entry.component.id} className="stem-row stem-card">
-                      <div>
+                      <div className="stem-copy">
                         <strong>{entry.component.name}</strong>
                         <p className="muted small">
                           {isUnavailable ? status : `${formatCurrency(resolved.unitPrice)} per ${entry.component.unit} • ${entry.component.sku}`}
                         </p>
                         <p className="muted small">{isUnavailable ? entry.component.sourceDetail : status}</p>
                       </div>
-                      <input
-                        type="number"
-                        min="0"
-                        value={isUnavailable ? 0 : entry.count}
-                        disabled={isUnavailable}
-                        onChange={(event) => updateStemCount(entry.component.id, event.target.value)}
-                      />
+                      <div className="stem-controls">
+                        <button type="button" className="step-button" disabled={isUnavailable} onClick={() => bumpStemCount(entry.component.id, -1)}>−</button>
+                        <input
+                          type="number"
+                          min="0"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={isUnavailable ? '' : entry.inputValue}
+                          disabled={isUnavailable}
+                          onChange={(event) => updateStemCount(entry.component.id, event.target.value)}
+                        />
+                        <button type="button" className="step-button" disabled={isUnavailable} onClick={() => bumpStemCount(entry.component.id, 1)}>+</button>
+                      </div>
                     </div>
                   )
                 })}
