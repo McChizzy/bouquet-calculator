@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { pricingCatalog } from './data/pricing'
-import { customFlowerPriceSource } from './data/sources/customFlowerPrices'
 import { marketOverrideStatus } from './data/sources/marketOverrides'
 import {
   createQuoteSummary,
@@ -368,39 +367,13 @@ function App() {
           </div>
         </div>
 
-        <div className="field-grid two-up">
-          <div className="schema-card stack-gap compact">
-            <div>
-              <strong>What powers the quote</strong>
-              <p className="muted small">Catalog sample pricing, market overrides, and the Bloomfield custom flower sheet are all feeding this calculator.</p>
-            </div>
-            <div className="compact-bullet-list muted small">
-              <p>Custom flower sheet: <strong>{customFlowerPriceSource.sheetName}</strong></p>
-              <p>Retail samples backfill where direct market pricing is missing</p>
-              <p>Override pricing wins whenever confirmed Lagos or Abuja rates exist</p>
-            </div>
-          </div>
-
-          <div className="schema-card stack-gap compact">
-            <div>
-              <strong>What still needs polish</strong>
-              <p className="muted small">This keeps the UI honest without dumping every raw source card into the main experience.</p>
-            </div>
-            <div className="compact-bullet-list muted small">
-              <p>Some catalog bouquets still rely on fallback retail sample bands</p>
-              <p>Customer-facing mode should eventually hide internal audit language completely</p>
-              <p>Quote export can be upgraded into a more polished WhatsApp-ready output</p>
-            </div>
-          </div>
-        </div>
-
         <details className="details-panel">
           <summary>Show technical source details</summary>
           <div className="stack-gap compact details-content">
             <div className="schema-card stack-gap compact">
               <p className="muted small code-inline">Catalog sample: /home/chizzy/.openclaw/workspace/bloomfield-flowers-site/src/main.js</p>
               <p className="muted small code-inline">Market overrides: src/data/sources/marketOverrides.import.json</p>
-              <p className="muted small code-inline">Custom flower sheet: {customFlowerPriceSource.sheetName}</p>
+              <p className="muted small code-inline">Custom flower sheet: Bloomfield custom flower sheet</p>
             </div>
 
             <div className="stack-gap compact">
