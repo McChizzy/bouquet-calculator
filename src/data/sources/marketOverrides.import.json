@@ -1,0 +1,47 @@
+{
+  "instructions": "Paste confirmed Lagos and Abuja sale-price rows here. Keep only confirmed values. Leave arrays empty when a market override is not available yet.",
+  "lagos": [
+    {
+      "sku": "BBF-CNT-ROS-100",
+      "price": { "type": "fixed", "amount": 700000 },
+      "evidence": "Lagos Price List row 7, 100 Roses, RETAIL PRICE ₦700,000"
+    },
+    {
+      "sku": "BBF-PCL-S",
+      "price": { "type": "fixed", "amount": 70000 },
+      "evidence": "Lagos Price List row 8, Mixed bouquet (S) made with different types of flowers, RETAIL PRICE ₦70,000"
+    },
+    {
+      "sku": "BBF-BRB-DLX-M",
+      "price": { "type": "fixed", "amount": 250000 },
+      "evidence": "Lagos Price List row 9, Mixed bouquet (M), FILLERS ₦250,000"
+    },
+    {
+      "sku": "BBF-RDG-L",
+      "price": { "type": "fixed", "amount": 300000 },
+      "evidence": "Lagos Price List row 10, Mixed bouquet (L), RETAIL PRICE ₦300,000"
+    }
+  ],
+  "abuja": [
+    {
+      "sku": "BBF-CNT-ROS-100",
+      "price": { "type": "fixed", "amount": 800000 },
+      "evidence": "Abuja Price List row 7, 100 Roses, RETAIL PRICE ₦800,000"
+    },
+    {
+      "sku": "BBF-PCL-S",
+      "price": { "type": "fixed", "amount": 120000 },
+      "evidence": "Abuja Price List row 8, Mixed bouquet (S) made with different types of flowers, RETAIL PRICE ₦120,000"
+    },
+    {
+      "sku": "BBF-BRB-DLX-M",
+      "price": { "type": "fixed", "amount": 300000 },
+      "evidence": "Abuja Price List row 8, Mixed bouquet (M), FILLERS ₦300,000"
+    },
+    {
+      "sku": "BBF-RDG-L",
+      "price": { "type": "fixed", "amount": 300000 },
+      "evidence": "Abuja Price List row 9, Mixed bouquet (L), RETAIL PRICE ₦300,000"
+    }
+  ]
+}
