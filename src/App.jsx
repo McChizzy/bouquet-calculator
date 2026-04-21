@@ -96,9 +96,39 @@ function App() {
       .join('\n')
   }, [customerName, quoteType, selectedCatalog, customSelections, summary.total])
 
+  const internalQuoteText = useMemo(() => {
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-NG', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    })
+    
+    return [
+      'INTERNAL QUOTE - BLOOMFIELD FLOWERS',
+      `Date: ${dateStr}`,
+      customerName ? `Customer: ${customerName}` : 'Customer: ',
+      recipientName ? `Recipient: ${recipientName}` : 'Recipient: ',
+      occasion ? `Occasion: ${occasion}` : 'Occasion: ',
+      '',
+      'ITEMS:',
+      ...summary.lineItems.map(item => 
+        `${item.label} (${item.detail}): ${formatCurrency(item.amount)}`
+      ),
+      '',
+      ...summary.adjustments.map(adjustment => 
+        `${adjustment.label}: ${formatCurrency(adjustment.amount)}`
+      ),
+      '',
+      `TOTAL: ${formatCurrency(summary.total)}`,
+      '',
+      'Valid for 24 hours, subject to flower availability.'
+    ].filter(line => line !== '').join('\n')
+  }, [customerName, recipientName, occasion, summary])
+
   async function copyQuote() {
     try {
-      await navigator.clipboard.writeText(quoteText)
+      await navigator.clipboard.writeText(internalQuoteText)
       window.alert('Quote copied to clipboard.')
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the preview panel.')
@@ -425,7 +455,7 @@ function App() {
 
           <label>
             <span>Preview text</span>
-            <textarea readOnly value={quoteText} rows={14} />
+            <textarea readOnly value={internalQuoteText} rows={14} />
           </label>
         </aside>
       </main>
