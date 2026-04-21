@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { pricingCatalog } from './data/pricing'
 import { marketOverrideStatus } from './data/sources/marketOverrides'
+import { customFlowerWholesalePrices } from './data/sources/customFlowerWholesalePrices'
 import {
   createQuoteSummary,
   formatCurrency,
@@ -16,6 +17,7 @@ const { catalogProducts, cities, components, priceBandOptions, quoteTypes } = pr
 const initialCustomSelections = components.map((component) => ({ component, count: 0, inputValue: '' }))
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
+const wholesalePriceMap = new Map(customFlowerWholesalePrices.map((item) => [item.id, item]))
 const themeOptions = [
   { id: 'light', label: 'Light' },
   { id: 'dark', label: 'Dark' },
@@ -34,6 +36,7 @@ function App() {
   const [customerName, setCustomerName] = useState('')
   const [recipientName, setRecipientName] = useState('')
   const [occasion, setOccasion] = useState('')
+  const [showWholesaleQuote, setShowWholesaleQuote] = useState(false)
   const [customSelections, setCustomSelections] = useState(initialCustomSelections)
 
   const selectedCatalog = catalogProducts.find((item) => item.id === selectedCatalogId)
@@ -83,6 +86,52 @@ function App() {
     return [...introLines, '', ...itemLines, ...totalLines].join('\n')
   }, [customerName, occasion, quoteType, recipientName, summary])
 
+  const wholesaleSummary = useMemo(() => {
+    const lineItems = []
+    const notes = []
+    let subtotal = 0
+
+    if (quoteType === 'catalog' && selectedCatalog) {
+      notes.push('Wholesale quote is currently supported for custom flower pricing only. Catalog bouquets still need manual wholesale review.')
+    }
+
+    if (quoteType === 'custom') {
+      customSelections
+        .filter((item) => item.count > 0)
+        .forEach((item) => {
+          const wholesaleItem = wholesalePriceMap.get(item.component.id)
+          const wholesaleEntry = wholesaleItem?.prices?.[city]
+
+          if (!wholesaleEntry) {
+            notes.push(`${item.component.name} has no confirmed wholesale ${getCityLabel(city)} price yet.`)
+            return
+          }
+
+          const lineSubtotal = wholesaleEntry.amount * item.count
+          subtotal += lineSubtotal
+          lineItems.push({
+            label: item.component.name,
+            detail: `${formatCurrency(wholesaleEntry.amount)} x ${item.count} ${item.component.unit}${item.count === 1 ? '' : 's'}`,
+            amount: lineSubtotal,
+          })
+        })
+    }
+
+    const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
+    const adjustments = [
+      { label: 'Delivery', amount: deliveryFee },
+      { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
+    ].filter((item) => item.amount !== 0)
+
+    return {
+      subtotal,
+      adjustments,
+      total: subtotal + adjustments.reduce((sum, item) => sum + item.amount, 0),
+      lineItems,
+      notes,
+    }
+  }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
+
   const customerQuoteText = useMemo(() => {
     const now = new Date()
     const dateStr = now.toLocaleDateString('en-NG', {
@@ -128,12 +177,47 @@ function App() {
     }
   }
 
+  const wholesaleQuoteText = useMemo(() => {
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-NG', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+
+    return [
+      '*Bloomfield Flowers Wholesale Quote*',
+      `Date: ${dateStr}`,
+      customerName ? `Hello ${customerName},` : 'Hello,',
+      '',
+      ...(wholesaleSummary.lineItems.length > 0
+        ? wholesaleSummary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
+        : ['No wholesale-priced items selected yet.']),
+      ...(wholesaleSummary.notes.length > 0 ? ['', ...wholesaleSummary.notes.map((note) => `Note: ${note}`)] : []),
+      '',
+      `*Subtotal:* ${formatCurrency(wholesaleSummary.subtotal)}`,
+      ...wholesaleSummary.adjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
+      `*Total:* ${formatCurrency(wholesaleSummary.total)}`,
+      '',
+      'Wholesale pricing quote, subject to confirmation and flower availability.',
+    ].join('\n')
+  }, [customerName, wholesaleSummary])
+
   async function copyCustomerQuote() {
     try {
       await navigator.clipboard.writeText(customerQuoteText)
       window.alert('Customer quote copied to clipboard.')
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the preview panel.')
+    }
+  }
+
+  async function copyWholesaleQuote() {
+    try {
+      await navigator.clipboard.writeText(wholesaleQuoteText)
+      window.alert('Wholesale quote copied to clipboard.')
+    } catch {
+      window.alert('Clipboard unavailable. Copy manually from the wholesale preview panel.')
     }
   }
 
@@ -450,6 +534,22 @@ function App() {
             <span>Preview text</span>
             <textarea readOnly value={quoteText} rows={14} />
           </label>
+
+          <details className="details-panel" style={{ marginTop: '14px' }} open={showWholesaleQuote}>
+            <summary onClick={(event) => {
+              event.preventDefault()
+              setShowWholesaleQuote((current) => !current)
+            }}>
+              {showWholesaleQuote ? 'Hide wholesale quote tools' : 'Show wholesale quote tools'}
+            </summary>
+            <div className="stack-gap compact details-content">
+              <button className="primary-button" onClick={copyWholesaleQuote}>Copy Wholesale quote</button>
+              <label>
+                <span>Wholesale preview</span>
+                <textarea readOnly value={wholesaleQuoteText} rows={12} />
+              </label>
+            </div>
+          </details>
         </aside>
       </main>
 
