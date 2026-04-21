@@ -57,32 +57,56 @@ function App() {
     [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
   )
 
+  const quoteText = useMemo(() => {
+    const introLines = [
+      '🌸 *Bloomfield Flowers Quote*',
+      customerName ? `Hello ${customerName},` : 'Hello,',
+      '',
+      `*City:* ${summary.city}`,
+      `*Type:* ${quoteType === 'catalog' ? 'Catalog bouquet' : 'Custom bouquet'}`,
+      recipientName ? `*Recipient:* ${recipientName}` : null,
+      occasion ? `*Occasion:* ${occasion}` : null,
+    ].filter(Boolean)
+
+    const itemLines = summary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
+
+    const totalLines = [
+      '',
+      `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
+      ...summary.adjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
+      `*Total:* ${formatCurrency(summary.total)}`,
+      '',
+      'Valid for 24 hours, subject to flower availability.',
+      'Thank you for choosing Bloomfield Flowers 💐',
+    ]
+
+    return [...introLines, '', ...itemLines, ...totalLines].join('\n')
+  }, [customerName, occasion, quoteType, recipientName, summary])
+
   const customerQuoteText = useMemo(() => {
     const now = new Date()
-    const dateStr = now.toLocaleDateString('en-NG', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
+    const dateStr = now.toLocaleDateString('en-NG', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     })
-    
-    // Generate product name for custom bouquets
+
     let productName = 'Custom bouquet'
     if (quoteType === 'catalog' && selectedCatalog) {
       productName = selectedCatalog.name
-    } else if (quoteType === 'custom' && customSelections.filter(s => s.count > 0).length > 0) {
-      const nonZeroItems = customSelections.filter(s => s.count > 0)
+    } else if (quoteType === 'custom') {
+      const nonZeroItems = customSelections.filter((selection) => selection.count > 0)
       if (nonZeroItems.length === 1) {
         productName = `${nonZeroItems[0].component.name} Custom bouquet`
-      } else {
-        productName = `${nonZeroItems.map(s => s.component.name).join(', and ')} Custom bouquet`
+      } else if (nonZeroItems.length > 1) {
+        productName = `${nonZeroItems.map((selection) => selection.component.name).join(', and ')} Custom bouquet`
       }
     }
-    
+
     return [
       '*Bloomfield Flowers Quote*',
       `Date: ${dateStr}`,
-      customerName ? `Hello ${customerName},` : 'Hello,',
-      '',
+      customerName ? `Hello, ${customerName}` : 'Hello,',
       `*Product Name:* ${productName}`,
       `*Bouquet Price:* ${formatCurrency(summary.total)}`,
       'Order note:',
@@ -91,44 +115,13 @@ function App() {
       'Email address:',
       '',
       'Valid for 24 hours, subject to flower availability.',
-      'Thank you for choosing Bloom. Flowers 💐'
-    ].filter(line => line !== '')
-      .join('\n')
-  }, [customerName, quoteType, selectedCatalog, customSelections, summary.total])
-
-  const internalQuoteText = useMemo(() => {
-    const now = new Date()
-    const dateStr = now.toLocaleDateString('en-NG', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
-    })
-    
-    return [
-      'INTERNAL QUOTE - BLOOMFIELD FLOWERS',
-      `Date: ${dateStr}`,
-      customerName ? `Customer: ${customerName}` : 'Customer: ',
-      recipientName ? `Recipient: ${recipientName}` : 'Recipient: ',
-      occasion ? `Occasion: ${occasion}` : 'Occasion: ',
-      '',
-      'ITEMS:',
-      ...summary.lineItems.map(item => 
-        `${item.label} (${item.detail}): ${formatCurrency(item.amount)}`
-      ),
-      '',
-      ...summary.adjustments.map(adjustment => 
-        `${adjustment.label}: ${formatCurrency(adjustment.amount)}`
-      ),
-      '',
-      `TOTAL: ${formatCurrency(summary.total)}`,
-      '',
-      'Valid for 24 hours, subject to flower availability.'
-    ].filter(line => line !== '').join('\n')
-  }, [customerName, recipientName, occasion, summary])
+      'Thank you for choosing Bloomfield Flowers 💐',
+    ].join('\n')
+  }, [customerName, customSelections, quoteType, selectedCatalog, summary.total])
 
   async function copyQuote() {
     try {
-      await navigator.clipboard.writeText(internalQuoteText)
+      await navigator.clipboard.writeText(quoteText)
       window.alert('Quote copied to clipboard.')
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the preview panel.')
@@ -455,7 +448,7 @@ function App() {
 
           <label>
             <span>Preview text</span>
-            <textarea readOnly value={internalQuoteText} rows={14} />
+            <textarea readOnly value={quoteText} rows={14} />
           </label>
         </aside>
       </main>
