@@ -57,36 +57,58 @@ function App() {
     [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
   )
 
-  const quoteText = useMemo(() => {
-    const introLines = [
-      '🌸 *Bloomfield Flowers Quote*',
+  const customerQuoteText = useMemo(() => {
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-NG', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    })
+    
+    // Generate product name for custom bouquets
+    let productName = 'Custom bouquet'
+    if (quoteType === 'catalog' && selectedCatalog) {
+      productName = selectedCatalog.name
+    } else if (quoteType === 'custom' && customSelections.filter(s => s.count > 0).length > 0) {
+      const nonZeroItems = customSelections.filter(s => s.count > 0)
+      if (nonZeroItems.length === 1) {
+        productName = `${nonZeroItems[0].component.name} Custom bouquet`
+      } else {
+        productName = `${nonZeroItems.map(s => s.component.name).join(', and ')} Custom bouquet`
+      }
+    }
+    
+    return [
+      '*Bloomfield Flowers Quote*',
+      `Date: ${dateStr}`,
       customerName ? `Hello ${customerName},` : 'Hello,',
       '',
-      `*City:* ${summary.city}`,
-      `*Type:* ${quoteType === 'catalog' ? 'Catalog bouquet' : 'Custom bouquet'}`,
-      recipientName ? `*Recipient:* ${recipientName}` : null,
-      occasion ? `*Occasion:* ${occasion}` : null,
-    ].filter(Boolean)
-
-    const itemLines = summary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
-
-    const totalLines = [
-      '',
-      `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
-      ...summary.adjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
-      `*Total:* ${formatCurrency(summary.total)}`,
+      `*Product Name:* ${productName}`,
+      `*Bouquet Price:* ${formatCurrency(summary.total)}`,
+      'Order note:',
+      'Contact Number:',
+      'Contact Address:',
+      'Email address:',
       '',
       'Valid for 24 hours, subject to flower availability.',
-      'Thank you for choosing Bloomfield Flowers 💐',
-    ]
-
-    return [...introLines, '', ...itemLines, ...totalLines].join('\n')
-  }, [customerName, occasion, quoteType, recipientName, summary])
+      'Thank you for choosing Bloom. Flowers 💐'
+    ].filter(line => line !== '')
+      .join('\n')
+  }, [customerName, quoteType, selectedCatalog, customSelections, summary.total])
 
   async function copyQuote() {
     try {
       await navigator.clipboard.writeText(quoteText)
       window.alert('Quote copied to clipboard.')
+    } catch {
+      window.alert('Clipboard unavailable. Copy manually from the preview panel.')
+    }
+  }
+
+  async function copyCustomerQuote() {
+    try {
+      await navigator.clipboard.writeText(customerQuoteText)
+      window.alert('Customer quote copied to clipboard.')
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the preview panel.')
     }
@@ -398,7 +420,8 @@ function App() {
             </div>
           )}
 
-          <button className="primary-button" onClick={copyQuote}>Copy WhatsApp-ready quote</button>
+          <button className="primary-button" onClick={copyQuote}>Copy Internal quote</button>
+          <button className="primary-button" onClick={copyCustomerQuote} style={{ marginTop: '10px' }}>Copy Customer WhatsApp quote</button>
 
           <label>
             <span>Preview text</span>

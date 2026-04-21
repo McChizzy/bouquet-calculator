@@ -1,7 +1,7 @@
 export const customFlowerPriceSource = {
   workbookUrl: 'https://docs.google.com/spreadsheets/d/1dq_lMoO1k5rYt9hfk79GVn2F1P2dDFIi6eE2OtoaTMs/edit?usp=drivesdk',
   sheetName: 'Bloomfield Retail price list',
-  extractedAt: '2026-04-18',
+  extractedAt: '2026-04-20',
 }
 
 export const customFlowerPrices = [
@@ -27,10 +27,10 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 5.',
-    sourceDetail: 'Spray Roses, Lagos ₦7,500, Abuja ₦8,000.',
+    sourceDetail: 'Spray Roses, Lagos ₦8,000, Abuja ₦8,500.',
     prices: {
-      lagos: { type: 'fixed', amount: 7500 },
-      abuja: { type: 'fixed', amount: 8000 },
+      lagos: { type: 'fixed', amount: 8000 },
+      abuja: { type: 'fixed', amount: 8500 },
     },
   },
   {
@@ -82,10 +82,10 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 9.',
-    sourceDetail: 'Lagos ₦5,500, Abuja ₦10,000.',
+    sourceDetail: 'Lagos ₦5,500, Abuja ₦8,500.',
     prices: {
       lagos: { type: 'fixed', amount: 5500 },
-      abuja: { type: 'fixed', amount: 10000 },
+      abuja: { type: 'fixed', amount: 8500 },
     },
   },
   {
@@ -123,22 +123,9 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 12.',
-    sourceDetail: 'Lagos ₦14,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Lagos ₦15,000. Abuja not confirmed in sheet.',
     prices: {
-      lagos: { type: 'fixed', amount: 14000 },
-    },
-  },
-  {
-    id: 'limonium',
-    sku: 'CMP-LIMONIUM',
-    name: 'Limonium',
-    unit: 'stem',
-    category: 'flower',
-    pricingType: 'fixed',
-    source: 'Bloomfield Retail price list row 13.',
-    sourceDetail: 'Lagos ₦5,000. Abuja not confirmed in sheet.',
-    prices: {
-      lagos: { type: 'fixed', amount: 5000 },
+      lagos: { type: 'fixed', amount: 15000 },
     },
   },
   {
