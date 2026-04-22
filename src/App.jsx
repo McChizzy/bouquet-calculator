@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+
+const SALES_ROLE = 'sales'
+const OPERATIONS_ROLE = 'operations'
 import { pricingCatalog } from './data/pricing'
 import { marketOverrideStatus } from './data/sources/marketOverrides'
 import { customFlowerWholesalePrices } from './data/sources/customFlowerWholesalePrices'
@@ -18,14 +21,20 @@ const initialCustomSelections = components.map((component) => ({ component, coun
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
 const wholesalePriceMap = new Map(customFlowerWholesalePrices.map((item) => [item.id, item]))
+const roleOptions = [
+  { id: SALES_ROLE, label: 'Sales view' },
+  { id: OPERATIONS_ROLE, label: 'Operations view' },
+]
+
 const themeOptions = [
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
-  { id: 'night', label: 'Night' },
+  { id: 'light', label: 'Light', icon: '☀️' },
+  { id: 'dark', label: 'Dark', icon: '🌙' },
+  { id: 'night', label: 'Night', icon: '🌌' },
 ]
 
 function App() {
   const [theme, setTheme] = useState(() => window.localStorage.getItem('bouquet-theme') || 'light')
+  const [activeRole, setActiveRole] = useState(() => window.localStorage.getItem('bouquet-role') || OPERATIONS_ROLE)
   const [city, setCity] = useState(cities[0].id)
   const [quoteType, setQuoteType] = useState('custom')
   const [selectedCatalogId, setSelectedCatalogId] = useState(catalogProducts[0].id)
@@ -59,6 +68,19 @@ function App() {
       }),
     [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
   )
+
+  const customerSendText = useMemo(() => {
+    const lines = [
+      customerName ? `Hi ${customerName},` : 'Hi,',
+      `Your bouquet quote is ${formatCurrency(summary.total)}.`,
+      occasion ? `Occasion: ${occasion}` : null,
+      recipientName ? `Recipient: ${recipientName}` : null,
+      'Reply here to confirm and we’ll finalize delivery details.',
+      'Bloomfield Flowers 💐',
+    ].filter(Boolean)
+
+    return lines.join('\n')
+  }, [customerName, occasion, recipientName, summary.total])
 
   const quoteText = useMemo(() => {
     const introLines = [
@@ -168,6 +190,15 @@ function App() {
     ].join('\n')
   }, [customerName, customSelections, quoteType, selectedCatalog, summary.total])
 
+  async function copyCustomerSendText() {
+    try {
+      await navigator.clipboard.writeText(customerSendText)
+      window.alert('Customer send text copied to clipboard.')
+    } catch {
+      window.alert('Clipboard unavailable. Copy manually from the customer send preview panel.')
+    }
+  }
+
   async function copyQuote() {
     try {
       await navigator.clipboard.writeText(quoteText)
@@ -261,6 +292,10 @@ function App() {
     window.localStorage.setItem('bouquet-theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    window.localStorage.setItem('bouquet-role', activeRole)
+  }, [activeRole])
+
   return (
     <div className="app-shell">
       <header className="hero-card stack-gap compact">
@@ -271,17 +306,33 @@ function App() {
             <p className="muted">Catalogue and custom quoting, centered on Lagos and Abuja pricing with Bloomfield sheet-backed custom flower rates.</p>
           </div>
 
-          <div className="theme-switcher" role="group" aria-label="Theme switcher">
-            {themeOptions.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={`theme-chip ${theme === option.id ? 'theme-chip-active' : ''}`}
-                onClick={() => setTheme(option.id)}
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className="stack-gap compact" style={{ alignItems: 'flex-end' }}>
+            <div className="theme-switcher" role="group" aria-label="Role switcher">
+              {roleOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`theme-chip ${activeRole === option.id ? 'theme-chip-active' : ''}`}
+                  onClick={() => setActiveRole(option.id)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <div className="theme-switcher" role="group" aria-label="Theme switcher">
+              {themeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`theme-chip ${theme === option.id ? 'theme-chip-active' : ''}`}
+                  onClick={() => setTheme(option.id)}
+                  title={option.label}
+                  aria-label={option.label}
+                >
+                  <span aria-hidden="true">{option.icon}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -527,29 +578,44 @@ function App() {
             </div>
           )}
 
-          <button className="primary-button" onClick={copyQuote}>Copy Internal quote</button>
+          {activeRole === OPERATIONS_ROLE && (
+            <>
+              <button className="primary-button" onClick={copyQuote}>Copy Internal quote</button>
+              <label>
+                <span>Internal preview</span>
+                <textarea readOnly value={quoteText} rows={14} />
+              </label>
+
+              <details className="details-panel" style={{ marginTop: '14px' }} open={showWholesaleQuote}>
+                <summary onClick={(event) => {
+                  event.preventDefault()
+                  setShowWholesaleQuote((current) => !current)
+                }}>
+                  {showWholesaleQuote ? 'Hide wholesale quote tools' : 'Show wholesale quote tools'}
+                </summary>
+                <div className="stack-gap compact details-content">
+                  <button className="primary-button" onClick={copyWholesaleQuote}>Copy Wholesale quote</button>
+                  <label>
+                    <span>Wholesale preview</span>
+                    <textarea readOnly value={wholesaleQuoteText} rows={12} />
+                  </label>
+                </div>
+              </details>
+            </>
+          )}
+
           <button className="primary-button" onClick={copyCustomerQuote} style={{ marginTop: '10px' }}>Copy Customer WhatsApp quote</button>
+          <button className="primary-button" onClick={copyCustomerSendText} style={{ marginTop: '10px' }}>Copy Short customer send</button>
 
           <label>
-            <span>Preview text</span>
-            <textarea readOnly value={quoteText} rows={14} />
+            <span>Customer quote preview</span>
+            <textarea readOnly value={customerQuoteText} rows={10} />
           </label>
 
-          <details className="details-panel" style={{ marginTop: '14px' }} open={showWholesaleQuote}>
-            <summary onClick={(event) => {
-              event.preventDefault()
-              setShowWholesaleQuote((current) => !current)
-            }}>
-              {showWholesaleQuote ? 'Hide wholesale quote tools' : 'Show wholesale quote tools'}
-            </summary>
-            <div className="stack-gap compact details-content">
-              <button className="primary-button" onClick={copyWholesaleQuote}>Copy Wholesale quote</button>
-              <label>
-                <span>Wholesale preview</span>
-                <textarea readOnly value={wholesaleQuoteText} rows={12} />
-              </label>
-            </div>
-          </details>
+          <label>
+            <span>Short customer send preview</span>
+            <textarea readOnly value={customerSendText} rows={6} />
+          </label>
         </aside>
       </main>
 
