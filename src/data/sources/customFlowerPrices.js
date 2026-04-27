@@ -96,10 +96,10 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 10.',
-    sourceDetail: 'Lagos ₦5,000, Abuja ₦15,000.',
+    sourceDetail: 'Lagos ₦5,000, Abuja ₦13,000.',
     prices: {
       lagos: { type: 'fixed', amount: 5000 },
-      abuja: { type: 'fixed', amount: 15000 },
+      abuja: { type: 'fixed', amount: 13000 },
     },
   },
   {
