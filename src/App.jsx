@@ -437,7 +437,63 @@ function App() {
     }
   }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
 
-  const customerQuoteText = useMemo(() => {
+  const customerQuotePreviewText = useMemo(() => {
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-NG', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+
+    const itemLines = quoteType === 'custom'
+      ? selectedCustomItems.length > 0
+        ? selectedCustomItems.map((entry) => {
+            const resolved = resolveUnitPrice({ item: entry.component, city, quantity: entry.count })
+            return `• ${entry.component.name} x ${entry.count} — ${formatCurrency(resolved.unitPrice * entry.count)}`
+          })
+        : ['• Final bouquet details will be confirmed before checkout.']
+      : summary.lineItems.length
+        ? summary.lineItems.map((item) => `• ${item.label} — ${formatCurrency(item.amount)}`)
+        : ['• Final bouquet details will be confirmed before checkout.']
+
+    return [
+      '*Bloomfield Flowers Quote Preview*',
+      `Quote ID: ${quoteId}`,
+      `Date: ${dateStr}`,
+      customerName ? `Hello ${customerName},` : 'Hello,',
+      '',
+      `*City:* ${summary.city}`,
+      `*Bouquet:* ${productLabel}`,
+      recipientName ? `*Recipient:* ${recipientName}` : null,
+      occasion ? `*Occasion:* ${occasion}` : null,
+      '',
+      '*Quote details*',
+      ...itemLines,
+      '',
+      `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
+      ...effectiveAdjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
+      `*Total payable:* ${formatCurrency(effectiveTotal)}`,
+      '',
+      validityNote,
+      'Reply to confirm and we’ll finalize delivery details.',
+      'Bloomfield Flowers 💐',
+    ].filter(Boolean).join('\n')
+  }, [
+    city,
+    customerName,
+    effectiveAdjustments,
+    effectiveTotal,
+    occasion,
+    productLabel,
+    quoteType,
+    selectedCustomItems,
+    validityNote,
+    quoteId,
+    recipientName,
+    summary,
+  ])
+
+  const customerQuoteCopyText = useMemo(() => {
     const now = new Date()
     const dateStr = now.toLocaleDateString('en-NG', {
       day: '2-digit',
@@ -467,18 +523,12 @@ function App() {
       '*Quote details*',
       ...itemLines,
       '',
-      `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
-      ...effectiveAdjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
-      `*Total payable:* ${formatCurrency(effectiveTotal)}`,
-      '',
       validityNote,
       'Reply to confirm and we’ll finalize delivery details.',
       'Bloomfield Flowers 💐',
     ].filter(Boolean).join('\n')
   }, [
     customerName,
-    effectiveAdjustments,
-    effectiveTotal,
     occasion,
     productLabel,
     quoteType,
@@ -535,7 +585,7 @@ function App() {
 
   async function copyCustomerQuote() {
     try {
-      await navigator.clipboard.writeText(customerQuoteText)
+      await navigator.clipboard.writeText(customerQuoteCopyText)
       window.alert('Customer quote copied to clipboard.')
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the preview panel.')
@@ -1297,25 +1347,12 @@ function App() {
             </div>
           )}
 
-          <button className="primary-button" onClick={copyCustomerQuote}>Copy Customer WhatsApp quote</button>
-          <button className="secondary-button" onClick={copyCustomerSendText}>Copy Short customer send</button>
-
-          <label>
-            <span>Customer quote preview</span>
-            <textarea readOnly value={customerQuoteText} rows={14} />
-          </label>
-
-          <label>
-            <span>Short customer send preview</span>
-            <textarea readOnly value={customerSendText} rows={6} />
-          </label>
-
           {activeRole === OPERATIONS_ROLE && (
             <>
               <div className="section-heading compact-heading">
                 <p className="eyebrow">Step 4</p>
                 <h3>Internal preview and share</h3>
-                <p className="muted small">Keep the customer WhatsApp flow first, then use the internal quote for audit detail.</p>
+                <p className="muted small">Use the internal quote first for audit detail, then send the customer-ready WhatsApp version.</p>
               </div>
 
               <button className="primary-button" onClick={copyQuote}>Copy Internal quote</button>
@@ -1341,6 +1378,19 @@ function App() {
               </details>
             </>
           )}
+
+          <button className="primary-button" onClick={copyCustomerQuote}>Copy Customer WhatsApp quote</button>
+          <button className="secondary-button" onClick={copyCustomerSendText}>Copy Short customer send</button>
+
+          <label>
+            <span>Customer quote preview</span>
+            <textarea readOnly value={customerQuotePreviewText} rows={14} />
+          </label>
+
+          <label>
+            <span>Short customer send preview</span>
+            <textarea readOnly value={customerSendText} rows={6} />
+          </label>
         </aside>
       </main>
 

@@ -105,14 +105,32 @@ textarea {
   gap: 14px;
 }
 
+.quote-basics-grid {
+  align-items: end;
+}
+
+.quote-basics-grid label {
+  min-width: 0;
+}
+
 .quote-basics-grid label span,
 .quote-basics-grid select,
-.quote-basics-grid input {
-  letter-spacing: normal;
-  word-spacing: normal;
+.quote-basics-grid input,
+.quote-basics-grid option {
+  letter-spacing: 0;
+  word-spacing: 0;
   font-kerning: normal;
   font-variant-ligatures: normal;
   text-transform: none;
+  line-height: 1.2;
+}
+
+.quote-basics-grid select,
+.quote-basics-grid input {
+  min-height: 48px;
+  height: 48px;
+  padding: 12px 14px;
+  font-size: 1rem;
 }
 
 .stem-row {
