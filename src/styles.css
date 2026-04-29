@@ -105,6 +105,16 @@ textarea {
   gap: 14px;
 }
 
+.quote-basics-grid label span,
+.quote-basics-grid select,
+.quote-basics-grid input {
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-kerning: normal;
+  font-variant-ligatures: normal;
+  text-transform: none;
+}
+
 .stem-row {
   display: flex;
   align-items: center;
@@ -179,25 +189,37 @@ p {
 input,
 select,
 textarea,
-.primary-button {
+.primary-button,
+.secondary-button {
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border-strong);
   padding: 12px 14px;
   background: var(--surface-muted);
   color: var(--text);
+  letter-spacing: normal;
+  font-kerning: normal;
 }
 
 textarea {
   resize: vertical;
 }
 
+.primary-button,
+.secondary-button {
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .primary-button {
   background: var(--accent);
   color: white;
   border: none;
-  font-weight: 600;
-  cursor: pointer;
+}
+
+.secondary-button {
+  background: var(--surface-soft);
+  color: var(--accent-strong);
 }
 
 .eyebrow {
@@ -235,6 +257,27 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px;
+}
+
+.operator-summary-grid,
+.composition-list {
+  display: grid;
+  gap: 12px;
+}
+
+.composition-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-muted) 88%, var(--surface));
+  border: 1px solid var(--border);
+}
+
+.composition-item-muted {
+  opacity: 0.8;
 }
 
 .catalog-card {
@@ -297,6 +340,36 @@ textarea {
   color: #6b2150;
 }
 
+.status-banner {
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.status-neutral {
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
+  border: 1px solid var(--border);
+}
+
+.status-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.status-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.status-danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
 .total-row {
   padding-top: 12px;
   border-top: 1px solid #ead5dd;
@@ -304,6 +377,101 @@ textarea {
 
 .source-item-card {
   gap: 8px;
+}
+
+.hero-meta-row,
+.button-row,
+.builder-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.hero-meta-row .status-banner {
+  flex: 1 1 320px;
+}
+
+.hero-actions {
+  min-width: 220px;
+}
+
+.step-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.step-card-active {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent-strong);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.compact-heading {
+  gap: 4px;
+}
+
+.compact-button {
+  width: auto;
+}
+
+.file-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.file-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inline-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.stem-card-disabled {
+  opacity: 0.72;
 }
 
 .resolution-banner {
@@ -350,6 +518,14 @@ textarea {
 
   .three-up-lg {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .step-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .operator-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -474,6 +650,15 @@ textarea {
   .theme-chip {
     flex: 1;
     padding: 10px 12px;
+  }
+
+  .hero-actions,
+  .compact-button {
+    width: 100%;
+  }
+
+  .inline-toggle {
+    align-items: flex-start;
   }
 
   textarea {
