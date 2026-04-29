@@ -99,6 +99,22 @@ textarea {
   gap: 12px;
 }
 
+.quote-builder-panel {
+  gap: 14px;
+}
+
+.quote-builder-panel .section-heading {
+  gap: 4px;
+}
+
+.quote-builder-panel .quote-basics-grid {
+  margin-top: -2px;
+}
+
+.quote-builder-panel .compact-heading {
+  margin-top: 2px;
+}
+
 .field-grid,
 .catalog-grid {
   display: grid;

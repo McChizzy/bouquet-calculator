@@ -363,12 +363,25 @@ function App() {
       ? summary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
       : ['• No quote items selected yet.']
 
+    const wholesaleLines = [
+      '',
+      '*Wholesale snapshot*',
+      ...(wholesaleSummary.lineItems.length > 0
+        ? wholesaleSummary.lineItems.map((item) => `• ${item.label} (${item.detail}) — ${formatCurrency(item.amount)}`)
+        : ['• No wholesale-priced items selected yet.']),
+      ...(wholesaleSummary.notes.length > 0 ? wholesaleSummary.notes.map((note) => `Note: ${note}`) : []),
+      `*Wholesale subtotal:* ${formatCurrency(wholesaleSummary.subtotal)}`,
+      ...wholesaleSummary.adjustments.map((item) => `*Wholesale ${item.label}:* ${formatCurrency(item.amount)}`),
+      `*Wholesale total:* ${formatCurrency(wholesaleSummary.total)}`,
+    ]
+
     const totalLines = [
       '',
       `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
       ...effectiveAdjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
       `*Final total:* ${formatCurrency(effectiveTotal)}`,
       ...(manualOverrideEnabled && manualOverrideReason.trim() ? [`*Override reason:* ${manualOverrideReason.trim()}`] : []),
+      ...wholesaleLines,
       '',
       validityNote,
       'Thank you for choosing Bloomfield Flowers 💐',
@@ -389,6 +402,7 @@ function App() {
     quoteType,
     recipientName,
     summary,
+    wholesaleSummary,
   ])
 
   const wholesaleSummary = useMemo(() => {
@@ -996,7 +1010,7 @@ function App() {
       </header>
 
       <main className="layout-grid">
-        <section className="panel stack-gap">
+        <section className="panel stack-gap quote-builder-panel">
           <div className="section-heading">
             <p className="eyebrow">Step 1</p>
             <h2>Set quote basics</h2>
