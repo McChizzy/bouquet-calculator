@@ -153,6 +153,14 @@ textarea {
 
 .stem-controls input {
   text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.stem-controls input::-webkit-outer-spin-button,
+.stem-controls input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .step-button {
