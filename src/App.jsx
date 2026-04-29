@@ -345,6 +345,52 @@ function App() {
     return lines.join('\n')
   }, [city, customerName, effectiveTotal, occasion, recipientName])
 
+  const wholesaleSummary = useMemo(() => {
+    const lineItems = []
+    const notes = []
+    let subtotal = 0
+
+    if (quoteType === 'catalog' && selectedCatalog) {
+      notes.push('Wholesale quote is currently supported for custom flower pricing only. Catalog bouquets still need manual wholesale review.')
+    }
+
+    if (quoteType === 'custom') {
+      customSelections
+        .filter((item) => item.count > 0)
+        .forEach((item) => {
+          const wholesaleItem = wholesalePriceMap.get(item.component.id)
+          const wholesaleEntry = wholesaleItem?.prices?.[city]
+
+          if (!wholesaleEntry) {
+            notes.push(`${item.component.name} has no confirmed wholesale ${getCityLabel(city)} price yet.`)
+            return
+          }
+
+          const lineSubtotal = wholesaleEntry.amount * item.count
+          subtotal += lineSubtotal
+          lineItems.push({
+            label: item.component.name,
+            detail: `${formatCurrency(wholesaleEntry.amount)} x ${item.count} ${item.component.unit}${item.count === 1 ? '' : 's'}`,
+            amount: lineSubtotal,
+          })
+        })
+    }
+
+    const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
+    const adjustments = [
+      { label: 'Delivery', amount: deliveryFee },
+      { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
+    ].filter((item) => item.amount !== 0)
+
+    return {
+      subtotal,
+      adjustments,
+      total: subtotal + adjustments.reduce((sum, item) => sum + item.amount, 0),
+      lineItems,
+      notes,
+    }
+  }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
+
   const quoteText = useMemo(() => {
     const introLines = [
       '🌸 *Bloomfield Flowers Internal Quote*',
@@ -404,52 +450,6 @@ function App() {
     summary,
     wholesaleSummary,
   ])
-
-  const wholesaleSummary = useMemo(() => {
-    const lineItems = []
-    const notes = []
-    let subtotal = 0
-
-    if (quoteType === 'catalog' && selectedCatalog) {
-      notes.push('Wholesale quote is currently supported for custom flower pricing only. Catalog bouquets still need manual wholesale review.')
-    }
-
-    if (quoteType === 'custom') {
-      customSelections
-        .filter((item) => item.count > 0)
-        .forEach((item) => {
-          const wholesaleItem = wholesalePriceMap.get(item.component.id)
-          const wholesaleEntry = wholesaleItem?.prices?.[city]
-
-          if (!wholesaleEntry) {
-            notes.push(`${item.component.name} has no confirmed wholesale ${getCityLabel(city)} price yet.`)
-            return
-          }
-
-          const lineSubtotal = wholesaleEntry.amount * item.count
-          subtotal += lineSubtotal
-          lineItems.push({
-            label: item.component.name,
-            detail: `${formatCurrency(wholesaleEntry.amount)} x ${item.count} ${item.component.unit}${item.count === 1 ? '' : 's'}`,
-            amount: lineSubtotal,
-          })
-        })
-    }
-
-    const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
-    const adjustments = [
-      { label: 'Delivery', amount: deliveryFee },
-      { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
-    ].filter((item) => item.amount !== 0)
-
-    return {
-      subtotal,
-      adjustments,
-      total: subtotal + adjustments.reduce((sum, item) => sum + item.amount, 0),
-      lineItems,
-      notes,
-    }
-  }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
 
   const customerQuotePreviewText = useMemo(() => {
     const now = new Date()
