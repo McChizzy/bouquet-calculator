@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const SALES_ROLE = 'sales'
 const OPERATIONS_ROLE = 'operations'
 
+import bloomfieldLogo from './assets/bff-logo-p.jpeg?inline'
 import { pricingCatalog } from './data/pricing'
 import marketOverrideImport from './data/sources/marketOverrides.import.json'
 import { bloomfieldMarketOverrides, marketOverrideImportTemplate } from './data/sources/marketOverrides'
@@ -23,11 +24,30 @@ import {
 
 const { cities, priceBandOptions, quoteTypes } = pricingCatalog
 const SAVED_QUOTES_STORAGE_KEY = 'bloomfield-saved-quotes'
+const SAVED_INVOICES_STORAGE_KEY = 'bloomfield-saved-invoices'
+const COMPANY_PROFILE_STORAGE_KEY = 'bloomfield-company-profile'
+const DEFAULT_COMPANY_PROFILE = {
+  companyPhone: '+2347011203325',
+  companyInstagram: 'bloomfieldflowers_',
+  companyLocation: '',
+}
 const MARKET_OVERRIDE_DRAFT_STORAGE_KEY = 'bloomfield-market-override-draft'
 const CUSTOM_PRICES_DRAFT_STORAGE_KEY = 'bloomfield-custom-prices-draft'
 const ADMIN_LAST_APPLIED_STORAGE_KEY = 'bloomfield-admin-last-applied'
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
+const packagingOptions = [0, 2500, 5000, 7500, 10000, 15000, 20000]
+const arrangementPremiumTypeOptions = [
+  { id: 'flat', label: 'Flat amount' },
+  { id: 'percent', label: 'Percent of bouquet subtotal' },
+]
+const arrangementFlatOptions = [0, 2500, 5000, 10000, 15000, 20000, 30000]
+const arrangementPercentOptions = [0, 5, 10, 15, 20, 25]
+const saleExportTargetOptions = [
+  { id: 'csv', label: 'Download CSV row' },
+  { id: 'json', label: 'Copy JSON payload' },
+  { id: 'webhook', label: 'Copy webhook payload' },
+]
 const validityOptions = [
   { id: '24h', label: '24 hours', note: 'Valid for 24 hours, subject to flower availability.' },
   { id: '48h', label: '48 hours', note: 'Valid for 48 hours, subject to flower availability.' },
@@ -65,9 +85,9 @@ function getValidityNote(validityPreset, customValidityNote) {
   return validityOptions.find((option) => option.id === validityPreset)?.note || validityOptions[0].note
 }
 
-function getSavedQuotes() {
+function getStoredList(key) {
   try {
-    const raw = window.localStorage.getItem(SAVED_QUOTES_STORAGE_KEY)
+    const raw = window.localStorage.getItem(key)
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed : []
   } catch {
@@ -75,8 +95,20 @@ function getSavedQuotes() {
   }
 }
 
+function getSavedQuotes() {
+  return getStoredList(SAVED_QUOTES_STORAGE_KEY)
+}
+
+function getSavedInvoices() {
+  return getStoredList(SAVED_INVOICES_STORAGE_KEY)
+}
+
 function persistSavedQuotes(quotes) {
   window.localStorage.setItem(SAVED_QUOTES_STORAGE_KEY, JSON.stringify(quotes))
+}
+
+function persistSavedInvoices(invoices) {
+  window.localStorage.setItem(SAVED_INVOICES_STORAGE_KEY, JSON.stringify(invoices))
 }
 
 function getStoredText(key, fallback) {
@@ -95,14 +127,203 @@ function getInitialAdminLastApplied() {
   return window.localStorage.getItem(ADMIN_LAST_APPLIED_STORAGE_KEY) || ''
 }
 
-function downloadJson(filename, content) {
-  const blob = new Blob([content], { type: 'application/json' })
+function getInitialCompanyProfile() {
+  try {
+    const raw = window.localStorage.getItem(COMPANY_PROFILE_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : {}
+
+    return {
+      ...DEFAULT_COMPANY_PROFILE,
+      companyLocation: parsed?.companyLocation || '',
+    }
+  } catch {
+    return DEFAULT_COMPANY_PROFILE
+  }
+}
+
+function downloadFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
   link.download = filename
   link.click()
   window.URL.revokeObjectURL(url)
+}
+
+function downloadJson(filename, content) {
+  downloadFile(filename, content, 'application/json')
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function getDominantCustomFlower(customSelections) {
+  const selected = customSelections.filter((selection) => selection.count > 0)
+  if (selected.length === 0) return null
+
+  return [...selected].sort((left, right) => right.count - left.count)[0]
+}
+
+function toBouquetLabel(name) {
+  return `${name} bouquet`
+}
+
+function getInvoiceLineItems({ quoteType, selectedCatalog, customSelections, invoiceSubtotal }) {
+  const bouquetAmount = invoiceSubtotal
+
+  if (quoteType === 'catalog') {
+    return selectedCatalog
+      ? [{ label: selectedCatalog.name, detail: '1 bouquet', amount: bouquetAmount }]
+      : [{ label: 'Bouquet', detail: 'Pending line item confirmation', amount: bouquetAmount }]
+  }
+
+  const dominantFlower = getDominantCustomFlower(customSelections)
+  if (!dominantFlower) {
+    return [{ label: 'Custom bouquet', detail: 'Pending line item confirmation', amount: bouquetAmount }]
+  }
+
+  const selectedCount = customSelections.filter((selection) => selection.count > 0).length
+  const label = selectedCount > 1
+    ? `Mixed ${dominantFlower.component.name.toLowerCase()} bouquet`
+    : toBouquetLabel(dominantFlower.component.name)
+
+  return [{ label, detail: '1 bouquet', amount: bouquetAmount }]
+}
+
+function buildInvoiceMarkup({
+  invoiceNumber,
+  invoiceDate,
+  companyName,
+  companyTagline,
+  cityLabel,
+  customerName,
+  recipientName,
+  occasion,
+  productLabel,
+  invoiceLineItems,
+  invoiceSubtotal,
+  invoiceAdjustments,
+  effectiveTotal,
+  companyPhone,
+  companyInstagram,
+  companyLocation,
+}) {
+  const itemRows = invoiceLineItems
+    .map((item) => `
+      <tr>
+        <td>${escapeHtml(item.label)}</td>
+        <td>${escapeHtml(item.detail || '1 item')}</td>
+        <td style="text-align:right;">${escapeHtml(formatCurrency(item.amount))}</td>
+      </tr>`)
+    .join('')
+
+  const adjustmentMarkup = invoiceAdjustments
+    .map((item) => `
+      <div class="totals-row">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(formatCurrency(item.amount))}</strong>
+      </div>`)
+    .join('')
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(`${companyName} Invoice ${invoiceNumber}`)}</title>
+    <style>
+      body { font-family: Inter, Arial, sans-serif; margin: 0; background: #f5f2f4; color: #1f2937; }
+      body { font-family: Inter, Arial, sans-serif; margin: 0; background: #ffffff; color: #1f2937; }
+      .page { width: 190mm; min-height: 277mm; max-width: 190mm; margin: 0 auto; background: #fff; padding: 22px 26px 18px; position: relative; box-sizing: border-box; }
+      .top { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:14px; }
+      .brand-mark { display:inline-flex; align-items:center; }
+      .brand-mark img { width:78px; height:auto; display:block; object-fit:contain; image-rendering: -webkit-optimize-contrast; }
+      .invoice-title { text-align:right; }
+      .invoice-title h2 { margin:0; font-size:30px; letter-spacing:.08em; font-weight:600; line-height:1; }
+      .invoice-title p { margin:4px 0 0; }
+      .party-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+      .party-card { border:1px solid #f0d8e2; border-radius:12px; padding:10px 12px; background:#fffdfd; }
+      .label { color:#6b7280; font-size:12px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+      table { width:100%; border-collapse:collapse; margin-bottom:10px; }
+      thead th { background:#2f2a2d; color:#fff; padding:9px 10px; text-align:left; font-weight:600; }
+      tbody td { padding:9px 10px; border-bottom:1px solid #eee; vertical-align:top; }
+      .totals { margin-left:auto; max-width:280px; margin-bottom:8px; }
+      .totals-row { display:flex; justify-content:space-between; gap:16px; padding:4px 0; }
+      .totals-row.total { font-size:17px; font-weight:800; border-top:1px solid #e5e7eb; margin-top:4px; padding-top:8px; }
+      .footer-grid { display:grid; grid-template-columns: 1fr; gap:8px; margin-top:8px; }
+      .footer-card { border-top:1px solid #f0d8e2; padding:8px 0 0; background:#fff; }
+      .footer-card p { margin:2px 0; }
+      .label { color:#6b7280; font-size:11px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+      .top, .party-grid, table, .totals, .footer-grid, .party-card, .footer-card { break-inside: avoid; page-break-inside: avoid; }
+      @page { size: A4 portrait; margin: 10mm; }
+      @media print {
+        html, body { width: 210mm; height: 297mm; background:#fff; }
+        .page { margin:0 auto; max-width:190mm; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="top">
+        <div class="brand-mark">
+          <img src="${escapeHtml(bloomfieldLogo)}" alt="Bloomfield Flowers logo" />
+        </div>
+        <div class="invoice-title">
+          <h2>INVOICE</h2>
+          <p># ${escapeHtml(invoiceNumber)}</p>
+          <p>${escapeHtml(invoiceDate)}</p>
+        </div>
+      </div>
+
+      <div class="party-grid">
+        <div class="party-card">
+          <div class="label">Bill To</div>
+          <p><strong>${escapeHtml(customerName || 'Customer name pending')}</strong></p>
+          ${occasion ? `<p>${escapeHtml(occasion)}</p>` : ''}
+        </div>
+        <div class="party-card">
+          <div class="label">Ship To</div>
+          <p><strong>${escapeHtml(recipientName || customerName || 'Recipient pending')}</strong></p>
+          <p>${escapeHtml(productLabel)}</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Detail</th>
+            <th style="text-align:right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><strong>${escapeHtml(formatCurrency(invoiceSubtotal))}</strong></div>
+        ${adjustmentMarkup}
+        <div class="totals-row total"><span>Total</span><strong>${escapeHtml(formatCurrency(effectiveTotal))}</strong></div>
+      </div>
+
+      <div class="footer-grid">
+        <div class="footer-card">
+          <p><strong>Bloomfield Flowers</strong></p>
+          <p>📞 ${escapeHtml(companyPhone)}</p>
+          <p>IG: ${escapeHtml(companyInstagram)}</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`
 }
 
 function getCustomSelectionCount(customSelections) {
@@ -258,6 +479,9 @@ function App() {
   const [quantity, setQuantity] = useState(1)
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [discountPercent, setDiscountPercent] = useState(0)
+  const [packagingFee, setPackagingFee] = useState(0)
+  const [arrangementPremiumType, setArrangementPremiumType] = useState('flat')
+  const [arrangementPremiumValue, setArrangementPremiumValue] = useState(0)
   const [validityPreset, setValidityPreset] = useState('24h')
   const [customValidityNote, setCustomValidityNote] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -268,6 +492,13 @@ function App() {
   const [manualOverrideTotal, setManualOverrideTotal] = useState('')
   const [manualOverrideReason, setManualOverrideReason] = useState('')
   const [savedQuotes, setSavedQuotes] = useState(() => getSavedQuotes())
+  const [savedInvoices, setSavedInvoices] = useState(() => getSavedInvoices())
+  const [invoiceNumber, setInvoiceNumber] = useState(() => createQuoteId().replace('BFF', 'INV'))
+  const [companyProfile, setCompanyProfile] = useState(() => getInitialCompanyProfile())
+  const [saleExportTarget, setSaleExportTarget] = useState('csv')
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const invoiceDocumentRef = useRef(null)
+  const quoteSummaryRef = useRef(null)
 
   const catalogProducts = useMemo(
     () => mergeMarketPrices(bloomfieldRetailSamples, runtimeMarketOverrides),
@@ -301,23 +532,26 @@ function App() {
         band,
         deliveryFee,
         discountPercent,
+        packagingFee,
+        arrangementPremiumType,
+        arrangementPremiumValue,
       }),
-    [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
+    [arrangementPremiumType, arrangementPremiumValue, band, city, customSelections, deliveryFee, discountPercent, packagingFee, quantity, quoteType, selectedCatalog],
   )
 
   const manualOverrideValue = Number(manualOverrideTotal)
   const manualOverrideValid = manualOverrideEnabled && Number.isFinite(manualOverrideValue) && manualOverrideValue >= 0
   const effectiveTotal = manualOverrideValid ? manualOverrideValue : summary.total
   const manualOverrideDelta = manualOverrideValid ? manualOverrideValue - summary.total : 0
-  const effectiveAdjustments = manualOverrideValid
-    ? [...summary.adjustments, { label: 'Manual override', amount: manualOverrideDelta }]
-    : summary.adjustments
+  const effectiveAdjustments = summary.adjustments
+  const invoiceSubtotal = manualOverrideValid ? manualOverrideValue : summary.subtotal
+  const invoiceAdjustments = manualOverrideValid ? [] : effectiveAdjustments
 
   const effectiveNotes = [
     ...summary.notes,
     ...(manualOverrideEnabled && !manualOverrideValid ? ['Manual override total must be a valid amount.'] : []),
     ...(manualOverrideEnabled && manualOverrideValid && !manualOverrideReason.trim() ? ['Manual override reason is required for audit clarity.'] : []),
-    ...(manualOverrideEnabled && manualOverrideValid && manualOverrideReason.trim() ? [`Manual override reason: ${manualOverrideReason.trim()}`] : []),
+
   ]
 
   const quoteStatus = useMemo(
@@ -328,7 +562,14 @@ function App() {
   const selectedCustomStemCount = getCustomSelectionCount(customSelections)
   const selectedCustomLineCount = getCustomLineCount(customSelections)
   const productLabel = getProductLabel({ quoteType, selectedCatalog, customSelections })
+  const companyPhone = DEFAULT_COMPANY_PROFILE.companyPhone
+  const companyInstagram = DEFAULT_COMPANY_PROFILE.companyInstagram
+  const companyLocation = companyProfile.companyLocation || ''
   const validityNote = getValidityNote(validityPreset, customValidityNote)
+  const invoiceLineItems = useMemo(
+    () => getInvoiceLineItems({ quoteType, selectedCatalog, customSelections, invoiceSubtotal }),
+    [customSelections, invoiceSubtotal, quoteType, selectedCatalog],
+  )
   const selectedCustomItems = customSelections.filter((entry) => entry.count > 0)
   const unavailableCustomItems = customSelections.filter((entry) => !entry.component.prices?.[city])
 
@@ -376,8 +617,20 @@ function App() {
         })
     }
 
+    const normalizedPackagingFee = Number(packagingFee) || 0
+    const normalizedArrangementValue = Number(arrangementPremiumValue) || 0
+    const arrangementPremiumAmount = arrangementPremiumType === 'percent'
+      ? Math.round(subtotal * (normalizedArrangementValue / 100))
+      : normalizedArrangementValue
     const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
     const adjustments = [
+      { label: 'Packaging', amount: normalizedPackagingFee },
+      {
+        label: arrangementPremiumType === 'percent'
+          ? `Arrangement premium (${formatPercentage(normalizedArrangementValue)})`
+          : 'Arrangement premium',
+        amount: arrangementPremiumAmount,
+      },
       { label: 'Delivery', amount: deliveryFee },
       { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
     ].filter((item) => item.amount !== 0)
@@ -388,8 +641,10 @@ function App() {
       total: subtotal + adjustments.reduce((sum, item) => sum + item.amount, 0),
       lineItems,
       notes,
+      packagingFee: normalizedPackagingFee,
+      arrangementPremiumAmount,
     }
-  }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
+  }, [arrangementPremiumType, arrangementPremiumValue, city, customSelections, deliveryFee, discountPercent, packagingFee, quoteType, selectedCatalog])
 
   const quoteText = useMemo(() => {
     const introLines = [
@@ -426,7 +681,7 @@ function App() {
       `*Subtotal:* ${formatCurrency(summary.subtotal)}`,
       ...effectiveAdjustments.map((item) => `*${item.label}:* ${formatCurrency(item.amount)}`),
       `*Final total:* ${formatCurrency(effectiveTotal)}`,
-      ...(manualOverrideEnabled && manualOverrideReason.trim() ? [`*Override reason:* ${manualOverrideReason.trim()}`] : []),
+
       ...wholesaleLines,
       '',
       validityNote,
@@ -553,6 +808,31 @@ function App() {
     summary,
   ])
 
+  const invoiceDateLabel = useMemo(() => new Date().toLocaleDateString('en-NG', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }), [])
+
+  const invoiceMarkup = useMemo(() => buildInvoiceMarkup({
+    invoiceNumber,
+    invoiceDate: invoiceDateLabel,
+    companyName: 'Bloomfield Flowers',
+    companyTagline: 'Bouquet pricing and delivery invoice',
+    cityLabel: summary.city,
+    customerName,
+    recipientName,
+    occasion,
+    productLabel,
+    invoiceLineItems,
+    invoiceSubtotal,
+    invoiceAdjustments,
+    effectiveTotal,
+    companyPhone,
+    companyInstagram,
+    companyLocation,
+  }), [companyInstagram, companyLocation, companyPhone, customerName, effectiveTotal, invoiceAdjustments, invoiceDateLabel, invoiceLineItems, invoiceNumber, invoiceSubtotal, occasion, productLabel, recipientName])
+
   const wholesaleQuoteText = useMemo(() => {
     const now = new Date()
     const dateStr = now.toLocaleDateString('en-NG', {
@@ -579,6 +859,72 @@ function App() {
     ].join('\n')
   }, [customerName, wholesaleSummary])
 
+  const saleExportRecord = useMemo(() => {
+    const now = new Date()
+    const wholesaleHasGaps = wholesaleSummary.notes.length > 0 || (quoteType === 'catalog' && wholesaleSummary.subtotal === 0)
+    return {
+      quoteId,
+      invoiceNumber,
+      createdAt: now.toISOString(),
+      city: getCityLabel(city),
+      quoteType,
+      customerName: customerName || '',
+      recipientName: recipientName || '',
+      occasion: occasion || '',
+      productLabel,
+      salePrice: effectiveTotal,
+      saleSubtotal: summary.subtotal,
+      packagingFee,
+      arrangementPremiumType,
+      arrangementPremiumValue,
+      arrangementPremiumAmount: summary.arrangementPremiumAmount || 0,
+      deliveryFee,
+      discountPercent,
+      discountAmount: summary.discountAmount,
+      costPrice: wholesaleSummary.total,
+      costSubtotal: wholesaleSummary.subtotal,
+      costPriceStatus: wholesaleHasGaps ? 'partial_or_missing' : 'confirmed',
+      costPriceNotes: wholesaleSummary.notes,
+      lineItems: summary.lineItems,
+      wholesaleLineItems: wholesaleSummary.lineItems,
+      validityNote,
+      syncHint: 'Use this payload with Excel/Notion automation via Make, Zapier, Power Automate, or a webhook endpoint.',
+    }
+  }, [arrangementPremiumType, arrangementPremiumValue, city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, packagingFee, productLabel, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
+
+  const saleExportCsv = useMemo(() => {
+    const headers = [
+      'quote_id','invoice_number','created_at','city','quote_type','customer_name','recipient_name','occasion','product_label','sale_price','sale_subtotal','cost_price','cost_subtotal','cost_price_status','packaging_fee','arrangement_premium_type','arrangement_premium_value','arrangement_premium_amount','delivery_fee','discount_percent','discount_amount','validity_note','cost_price_notes'
+    ]
+    const values = [
+      saleExportRecord.quoteId,
+      saleExportRecord.invoiceNumber,
+      saleExportRecord.createdAt,
+      saleExportRecord.city,
+      saleExportRecord.quoteType,
+      saleExportRecord.customerName,
+      saleExportRecord.recipientName,
+      saleExportRecord.occasion,
+      saleExportRecord.productLabel,
+      saleExportRecord.salePrice,
+      saleExportRecord.saleSubtotal,
+      saleExportRecord.costPrice,
+      saleExportRecord.costSubtotal,
+      saleExportRecord.costPriceStatus,
+      saleExportRecord.packagingFee,
+      saleExportRecord.arrangementPremiumType,
+      saleExportRecord.arrangementPremiumValue,
+      saleExportRecord.arrangementPremiumAmount,
+      saleExportRecord.deliveryFee,
+      saleExportRecord.discountPercent,
+      saleExportRecord.discountAmount,
+      saleExportRecord.validityNote,
+      saleExportRecord.costPriceNotes.join(' | '),
+    ]
+    const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
+    return `${headers.join(',')}\n${values.map(escape).join(',')}`
+  }, [saleExportRecord])
+
   async function copyCustomerSendText() {
     try {
       await navigator.clipboard.writeText(customerSendText)
@@ -586,6 +932,27 @@ function App() {
     } catch {
       window.alert('Clipboard unavailable. Copy manually from the customer send preview panel.')
     }
+  }
+
+  function jumpToQuoteSummary() {
+    quoteSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  async function copySaleExportPayload() {
+    const payload = saleExportTarget === 'webhook'
+      ? JSON.stringify({ event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }, null, 2)
+      : JSON.stringify(saleExportRecord, null, 2)
+
+    try {
+      await navigator.clipboard.writeText(payload)
+      window.alert(saleExportTarget === 'webhook' ? 'Webhook-ready payload copied.' : 'Sales JSON payload copied.')
+    } catch {
+      window.alert('Clipboard unavailable. Copy the sales payload manually from the export panel.')
+    }
+  }
+
+  function downloadSaleCsv() {
+    downloadFile(`${quoteId.toLowerCase()}-sale-export.csv`, saleExportCsv, 'text/csv;charset=utf-8')
   }
 
   async function copyQuote() {
@@ -743,6 +1110,9 @@ function App() {
       quantity,
       deliveryFee,
       discountPercent,
+      packagingFee,
+      arrangementPremiumType,
+      arrangementPremiumValue,
       validityPreset,
       customValidityNote,
       customerName,
@@ -757,18 +1127,113 @@ function App() {
       })),
       previewLabel: productLabel,
       previewTotal: effectiveTotal,
+      invoiceNumber,
+      saleExportRecord,
     }
 
     const nextQuotes = [savedQuote, ...savedQuotes.filter((item) => item.id !== quoteId)].slice(0, 20)
     setSavedQuotes(nextQuotes)
     persistSavedQuotes(nextQuotes)
-    window.alert('Quote saved locally.')
+    window.alert('Quote saved locally and prepared for sales export.')
+  }
+
+  function saveCurrentInvoice() {
+    const savedInvoice = {
+      id: invoiceNumber,
+      linkedQuoteId: quoteId,
+      createdAt: new Date().toISOString(),
+      customerName,
+      recipientName,
+      city,
+      productLabel,
+      total: effectiveTotal,
+      html: invoiceMarkup,
+      companyProfile,
+      pdfReady: true,
+    }
+
+    const nextInvoices = [savedInvoice, ...savedInvoices.filter((item) => item.id !== invoiceNumber)].slice(0, 20)
+    setSavedInvoices(nextInvoices)
+    persistSavedInvoices(nextInvoices)
+    window.alert('Invoice saved locally.')
+  }
+
+  async function downloadInvoicePdf() {
+    if (!invoiceDocumentRef.current) {
+      window.alert('Invoice preview is not ready yet.')
+      return
+    }
+
+    try {
+      setIsGeneratingPdf(true)
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
+
+      const canvas = await html2canvas(invoiceDocumentRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      })
+
+      const imageData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 8
+      const maxWidth = pageWidth - (margin * 2)
+      const maxHeight = pageHeight - (margin * 2)
+      const widthRatio = maxWidth / canvas.width
+      const heightRatio = maxHeight / canvas.height
+      const scale = Math.min(widthRatio, heightRatio)
+      const imageWidth = canvas.width * scale
+      const imageHeight = canvas.height * scale
+      const x = (pageWidth - imageWidth) / 2
+      const y = margin
+
+      pdf.addImage(imageData, 'PNG', x, y, imageWidth, imageHeight)
+      pdf.save(`${invoiceNumber.toLowerCase()}.pdf`)
+    } catch {
+      window.alert('PDF export failed. Try again or use Print / PDF.')
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
+
+  function printInvoice() {
+    const printWindow = window.open('', '_blank', 'width=960,height=1200')
+
+    if (!printWindow) {
+      window.alert('Pop-up blocked. Allow pop-ups to print the invoice.')
+      return
+    }
+
+    printWindow.document.open()
+    printWindow.document.write(invoiceMarkup)
+    printWindow.document.close()
+
+    printWindow.addEventListener('load', () => {
+      try {
+        printWindow.document.title = `Bloomfield Invoice ${invoiceNumber}`
+        printWindow.focus()
+        printWindow.print()
+      } catch {
+        window.alert('Print preview failed. Use Download PDF instead.')
+      }
+    }, { once: true })
   }
 
   function loadSavedQuote(savedQuote) {
     const savedCounts = new Map((savedQuote.customSelections || []).map((item) => [item.componentId, item.count]))
 
     setQuoteId(savedQuote.id || createQuoteId())
+    setInvoiceNumber(savedQuote.invoiceNumber || (savedQuote.id || createQuoteId()).replace('BFF', 'INV'))
     setCity(savedQuote.city || cities[0].id)
     setQuoteType(savedQuote.quoteType || 'custom')
     setSelectedCatalogId(savedQuote.selectedCatalogId || catalogProducts[0]?.id || getDefaultCatalogId())
@@ -776,6 +1241,9 @@ function App() {
     setQuantity(savedQuote.quantity || 1)
     setDeliveryFee(savedQuote.deliveryFee || 0)
     setDiscountPercent(savedQuote.discountPercent || 0)
+    setPackagingFee(savedQuote.packagingFee || 0)
+    setArrangementPremiumType(savedQuote.arrangementPremiumType || 'flat')
+    setArrangementPremiumValue(savedQuote.arrangementPremiumValue || 0)
     setValidityPreset(savedQuote.validityPreset || '24h')
     setCustomValidityNote(savedQuote.customValidityNote || '')
     setCustomerName(savedQuote.customerName || '')
@@ -836,8 +1304,19 @@ function App() {
     setCustomSelections((current) => current.map((entry) => ({ ...entry, count: 0, inputValue: '' })))
   }
 
+  function updateCompanyProfile(field, value) {
+    setCompanyProfile((current) => ({
+      ...current,
+      [field]: value,
+      companyPhone: DEFAULT_COMPANY_PROFILE.companyPhone,
+      companyInstagram: DEFAULT_COMPANY_PROFILE.companyInstagram,
+    }))
+  }
+
   function resetQuote() {
-    setQuoteId(createQuoteId())
+    const nextQuoteId = createQuoteId()
+    setQuoteId(nextQuoteId)
+    setInvoiceNumber(nextQuoteId.replace('BFF', 'INV'))
     setCity(cities[0].id)
     setQuoteType('custom')
     setSelectedCatalogId(catalogProducts[0]?.id || getDefaultCatalogId())
@@ -845,6 +1324,9 @@ function App() {
     setQuantity(1)
     setDeliveryFee(0)
     setDiscountPercent(0)
+    setPackagingFee(0)
+    setArrangementPremiumType('flat')
+    setArrangementPremiumValue(0)
     setValidityPreset('24h')
     setCustomValidityNote('')
     setCustomerName('')
@@ -893,6 +1375,14 @@ function App() {
     window.localStorage.setItem(CUSTOM_PRICES_DRAFT_STORAGE_KEY, customPricesDraft)
   }, [customPricesDraft])
 
+  useEffect(() => {
+    window.localStorage.setItem(COMPANY_PROFILE_STORAGE_KEY, JSON.stringify({
+      ...companyProfile,
+      companyPhone: DEFAULT_COMPANY_PROFILE.companyPhone,
+      companyInstagram: DEFAULT_COMPANY_PROFILE.companyInstagram,
+    }))
+  }, [companyProfile])
+
   return (
     <div className="app-shell">
       <header className="hero-card stack-gap compact">
@@ -940,31 +1430,48 @@ function App() {
           </div>
           <div className="button-row hero-actions">
             <button type="button" className="secondary-button" onClick={saveCurrentQuote}>Save quote</button>
+            <button type="button" className="secondary-button" onClick={saveCurrentInvoice}>Save invoice</button>
             <button type="button" className="secondary-button" onClick={resetQuote}>Start new quote</button>
           </div>
         </div>
 
-        {savedQuotes.length > 0 && (
+        {(savedQuotes.length > 0 || savedInvoices.length > 0) && (
           <section className="panel stack-gap compact" style={{ marginTop: '12px' }}>
             <div className="section-heading compact-heading">
               <p className="eyebrow">Recent quotes</p>
               <h2>Saved locally</h2>
               <p className="muted small">Reopen recent quotes without rebuilding them from scratch.</p>
             </div>
-            <div className="stack-gap compact">
-              {savedQuotes.slice(0, 5).map((item) => (
-                <div key={item.id} className="schema-card stack-gap compact">
-                  <div className="summary-row">
-                    <strong>{item.previewLabel || 'Saved quote'}</strong>
-                    <span>{formatCurrency(item.previewTotal || 0)}</span>
+            <div className="field-grid two-up">
+              <div className="stack-gap compact">
+                <p className="muted small"><strong>Quotes</strong></p>
+                {savedQuotes.length > 0 ? savedQuotes.slice(0, 5).map((item) => (
+                  <div key={item.id} className="schema-card stack-gap compact">
+                    <div className="summary-row">
+                      <strong>{item.previewLabel || 'Saved quote'}</strong>
+                      <span>{formatCurrency(item.previewTotal || 0)}</span>
+                    </div>
+                    <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.quoteType === 'catalog' ? 'Catalog' : 'Custom'} • {item.id}</p>
+                    <div className="button-row">
+                      <button type="button" className="secondary-button" onClick={() => loadSavedQuote(item)}>Open</button>
+                      <button type="button" className="secondary-button" onClick={() => deleteSavedQuote(item.id)}>Delete</button>
+                    </div>
                   </div>
-                  <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.quoteType === 'catalog' ? 'Catalog' : 'Custom'} • {item.id}</p>
-                  <div className="button-row">
-                    <button type="button" className="secondary-button" onClick={() => loadSavedQuote(item)}>Open</button>
-                    <button type="button" className="secondary-button" onClick={() => deleteSavedQuote(item.id)}>Delete</button>
+                )) : <p className="muted small">No saved quotes yet.</p>}
+              </div>
+              <div className="stack-gap compact">
+                <p className="muted small"><strong>Invoices</strong></p>
+                {savedInvoices.length > 0 ? savedInvoices.slice(0, 5).map((item) => (
+                  <div key={item.id} className="schema-card stack-gap compact">
+                    <div className="summary-row">
+                      <strong>{item.productLabel || 'Saved invoice'}</strong>
+                      <span>{formatCurrency(item.total || 0)}</span>
+                    </div>
+                    <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.id}</p>
+                    <p className="muted small">Saved locally for reuse.</p>
                   </div>
-                </div>
-              ))}
+                )) : <p className="muted small">No saved invoices yet.</p>}
+              </div>
             </div>
           </section>
         )}
@@ -1138,7 +1645,10 @@ function App() {
                     ? `${selectedCustomLineCount} flower type${selectedCustomLineCount === 1 ? '' : 's'} selected • ${selectedCustomStemCount} stem${selectedCustomStemCount === 1 ? '' : 's'}`
                     : `Select flowers for the ${getCityLabel(city)} quote.`}
                 </p>
-                <button type="button" className="secondary-button compact-button" onClick={clearCustomSelections}>Clear flower counts</button>
+                <div className="button-row builder-toolbar-actions">
+                  <button type="button" className="secondary-button compact-button mobile-jump-button" onClick={jumpToQuoteSummary}>Go to bill / quote</button>
+                  <button type="button" className="secondary-button compact-button" onClick={clearCustomSelections}>Clear flower counts</button>
+                </div>
               </div>
 
               <div className="stack-gap compact">
@@ -1179,7 +1689,7 @@ function App() {
           )}
         </section>
 
-        <aside className="panel summary-panel stack-gap">
+        <aside ref={quoteSummaryRef} className="panel summary-panel stack-gap">
           <div>
             <p className="eyebrow">Step 3</p>
             <h2>{summary.city} quote</h2>
@@ -1246,10 +1756,25 @@ function App() {
               </div>
             ))}
             <div className="summary-row total-row"><span>Final total</span><strong>{formatCurrency(effectiveTotal)}</strong></div>
+            {manualOverrideValid && (
+              <div className="override-lock-chip" title="Internal note: final total is manually overridden.">
+                Final total locked by manual override
+              </div>
+            )}
           </div>
 
           <div className="stack-gap compact">
             <h3>Customer details</h3>
+            <div className="field-grid two-up">
+              <label>
+                <span>Invoice number</span>
+                <input value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} placeholder="INV-2026-0001" />
+              </label>
+              <label>
+                <span>Invoice date</span>
+                <input readOnly value={invoiceDateLabel} />
+              </label>
+            </div>
             <div className="field-grid two-up">
               <label>
                 <span>Customer name</span>
@@ -1264,6 +1789,14 @@ function App() {
               <span>Occasion</span>
               <input value={occasion} onChange={(event) => setOccasion(event.target.value)} placeholder="Birthday bouquet" />
             </label>
+          </div>
+
+          <div className="stack-gap compact">
+            <h3>Company details</h3>
+            <div className="schema-card stack-gap compact">
+              <p className="muted small">Phone: {companyPhone}</p>
+              <p className="muted small">IG: {companyInstagram}</p>
+            </div>
           </div>
 
           <div className="stack-gap compact">
@@ -1283,6 +1816,38 @@ function App() {
                   <option value="0">No delivery fee</option>
                   {deliveryOptions.map((amount) => (
                     <option key={`delivery-${amount}`} value={amount}>{formatCurrency(amount)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="field-grid two-up responsive-two-up">
+              <label>
+                <span>Packaging fee</span>
+                <select value={packagingFee} onChange={(event) => setPackagingFee(Number(event.target.value) || 0)}>
+                  {packagingOptions.map((amount) => (
+                    <option key={`packaging-${amount}`} value={amount}>{amount === 0 ? 'No packaging fee' : formatCurrency(amount)}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Arrangement premium mode</span>
+                <select value={arrangementPremiumType} onChange={(event) => setArrangementPremiumType(event.target.value)}>
+                  {arrangementPremiumTypeOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="field-grid two-up responsive-two-up">
+              <label>
+                <span>{arrangementPremiumType === 'percent' ? 'Arrangement premium (%)' : 'Arrangement premium amount'}</span>
+                <select value={arrangementPremiumValue} onChange={(event) => setArrangementPremiumValue(Number(event.target.value) || 0)}>
+                  {(arrangementPremiumType === 'percent' ? arrangementPercentOptions : arrangementFlatOptions).map((amount) => (
+                    <option key={`arrangement-${arrangementPremiumType}-${amount}`} value={amount}>
+                      {arrangementPremiumType === 'percent'
+                        ? (amount === 0 ? 'No arrangement premium' : formatPercentage(amount))
+                        : (amount === 0 ? 'No arrangement premium' : formatCurrency(amount))}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -1392,6 +1957,136 @@ function App() {
               </details>
             </>
           )}
+
+          <div className="stack-gap compact sale-export-panel">
+            <h3>Save quote to sales tools</h3>
+            <p className="muted small">This prepares a clean sales record for Excel, Notion, or automation. Direct live sync can be wired later via webhook or Power Automate/Make.</p>
+            <div className="field-grid two-up responsive-two-up">
+              <label>
+                <span>Export target</span>
+                <select value={saleExportTarget} onChange={(event) => setSaleExportTarget(event.target.value)}>
+                  {saleExportTargetOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="schema-card stack-gap compact">
+                <p className="muted small"><strong>Sale price:</strong> {formatCurrency(saleExportRecord.salePrice)}</p>
+                <p className="muted small"><strong>Cost price:</strong> {formatCurrency(saleExportRecord.costPrice)}</p>
+                <p className="muted small"><strong>Cost status:</strong> {saleExportRecord.costPriceStatus === 'confirmed' ? 'Confirmed wholesale total' : 'Partial / missing wholesale inputs'}</p>
+              </div>
+            </div>
+            <div className="button-row">
+              <button className="primary-button" onClick={saveCurrentQuote}>Save quote + sale record</button>
+              {saleExportTarget === 'csv'
+                ? <button className="secondary-button" onClick={downloadSaleCsv}>Download sale CSV</button>
+                : <button className="secondary-button" onClick={copySaleExportPayload}>{saleExportTarget === 'webhook' ? 'Copy webhook payload' : 'Copy sales JSON'}</button>}
+            </div>
+            {saleExportRecord.costPriceNotes.length > 0 && (
+              <div className="note-box soft-note">
+                {saleExportRecord.costPriceNotes.map((note) => <p key={`cost-note-${note}`}>{note}</p>)}
+              </div>
+            )}
+            <label>
+              <span>{saleExportTarget === 'csv' ? 'CSV preview' : 'Payload preview'}</span>
+              <textarea
+                readOnly
+                rows={8}
+                value={saleExportTarget === 'csv'
+                  ? saleExportCsv
+                  : JSON.stringify(
+                    saleExportTarget === 'webhook'
+                      ? { event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }
+                      : saleExportRecord,
+                    null,
+                    2,
+                  )}
+              />
+            </label>
+          </div>
+
+          <div className="stack-gap compact invoice-panel">
+            <h3>Invoice</h3>
+            <p className="muted small">Branded invoice preview with proper PDF export, plus HTML backup and print support.</p>
+            <div className="button-row">
+              <button className="primary-button" onClick={saveCurrentInvoice}>Save invoice</button>
+              <button className="secondary-button" onClick={downloadInvoicePdf} disabled={isGeneratingPdf}>{isGeneratingPdf ? 'Generating PDF…' : 'Download PDF'}</button>
+              <button className="secondary-button" onClick={printInvoice}>Print</button>
+            </div>
+            <p className="muted small">Download PDF gives the cleanest output. Browser print may still add browser headers/footers.</p>
+            <div className="invoice-preview-shell">
+              <div ref={invoiceDocumentRef} className="invoice-document-card">
+                <div className="invoice-document-top">
+                  <div className="invoice-brand-block">
+                    <img src={bloomfieldLogo} alt="Bloomfield Flowers logo" className="invoice-logo" />
+                  </div>
+                  <div className="invoice-id-block">
+                    <p className="invoice-title-word">INVOICE</p>
+                    <strong>{invoiceNumber}</strong>
+                    <p className="muted small">{invoiceDateLabel}</p>
+                  </div>
+                </div>
+
+                <div className="invoice-top-meta-row">
+                  <div className="invoice-city-chip">{summary.city}</div>
+                </div>
+
+                <div className="field-grid two-up">
+                  <div className="invoice-party-card">
+                    <p className="eyebrow">Bill to</p>
+                    <strong>{customerName || 'Customer pending'}</strong>
+                    {occasion ? <p className="muted small">{occasion}</p> : <p className="muted small">Occasion not added yet</p>}
+                  </div>
+                  <div className="invoice-party-card">
+                    <p className="eyebrow">Ship to</p>
+                    <strong>{recipientName || customerName || 'Recipient pending'}</strong>
+                    <p className="muted small">{productLabel}</p>
+                  </div>
+                </div>
+
+                <div className="invoice-table-card">
+                  <div className="invoice-table-head">
+                    <span>Item</span>
+                    <span>Detail</span>
+                    <span>Amount</span>
+                  </div>
+                  <div className="stack-gap compact">
+                    {invoiceLineItems.map((item) => (
+                      <div key={`invoice-${item.label}-${item.detail}`} className="invoice-grid-row">
+                        <strong>{item.label}</strong>
+                        <p className="muted small">{item.detail}</p>
+                        <strong className="invoice-amount-cell">{formatCurrency(item.amount)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="invoice-summary-grid">
+                  <div className="invoice-note-card stack-gap compact">
+                    <div>
+                      <p className="eyebrow">Company details</p>
+                      <p className="muted small"><strong>Bloomfield Flowers</strong></p>
+                      <p className="muted small">📞 {companyPhone}</p>
+                      <p className="muted small">IG: {companyInstagram}</p>
+                    </div>
+                  </div>
+                  <div className="invoice-totals-card">
+                    <div className="summary-row"><span>Subtotal</span><strong>{formatCurrency(invoiceSubtotal)}</strong></div>
+                    {invoiceAdjustments.map((item) => (
+                      <div key={`invoice-total-${item.label}`} className="summary-row">
+                        <span>{item.label}</span>
+                        <strong>{formatCurrency(item.amount)}</strong>
+                      </div>
+                    ))}
+                    <div className="summary-row invoice-total-row">
+                      <span>Total</span>
+                      <strong>{formatCurrency(effectiveTotal)}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <button className="primary-button" onClick={copyCustomerQuote}>Copy Customer WhatsApp quote</button>
           <button className="secondary-button" onClick={copyCustomerSendText}>Copy Short customer send</button>

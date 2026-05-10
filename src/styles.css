@@ -2,7 +2,7 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #1f2937;
   background: #f8f3f6;
-  line-height: 1.5;
+  line-height: 1.28;
   font-weight: 400;
   --bg: #f8f3f6;
   --surface: #ffffff;
@@ -65,7 +65,7 @@ textarea {
 .app-shell {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 12px;
 }
 
 .hero-card,
@@ -77,48 +77,88 @@ textarea {
 }
 
 .hero-card {
-  padding: 24px;
-  margin-bottom: 18px;
+  padding: 14px;
+  margin-bottom: 10px;
 }
 
 .layout-grid {
   display: grid;
-  gap: 18px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .panel {
-  padding: 20px;
+  padding: 10px;
+  min-width: 0;
 }
 
 .stack-gap {
   display: grid;
-  gap: 18px;
+  gap: 8px;
 }
 
 .stack-gap.compact {
-  gap: 12px;
+  gap: 10px;
 }
 
 .quote-builder-panel {
-  gap: 14px;
+  gap: 0px;
+  align-content: start;
+}
+
+.quote-builder-panel .stack-gap {
+  gap: 3px;
+}
+
+.quote-builder-panel > section.stack-gap {
+  gap: 5px;
+}
+
+.quote-builder-panel .builder-toolbar p,
+.quote-builder-panel .stem-copy p {
+  line-height: 1.1;
 }
 
 .quote-builder-panel .section-heading {
-  gap: 4px;
+  gap: 2px;
+  margin: 0 0 2px;
+}
+
+.quote-builder-panel .section-heading h2 {
+  line-height: 1.1;
+  font-size: 1rem;
+}
+
+.quote-builder-panel .section-heading p {
+  line-height: 1.05;
+  font-size: 0.8rem;
+  display: none;
+}
+
+.quote-builder-panel > .section-heading + .quote-basics-grid {
+  margin-top: 0;
 }
 
 .quote-builder-panel .quote-basics-grid {
-  margin-top: -2px;
+  margin: 0;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
 }
 
 .quote-builder-panel .compact-heading {
-  margin-top: 2px;
+  margin: 6px 0 0;
+}
+
+.quote-builder-panel label {
+  gap: 2px;
 }
 
 .field-grid,
 .catalog-grid {
   display: grid;
-  gap: 14px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .quote-basics-grid {
@@ -143,17 +183,17 @@ textarea {
 
 .quote-basics-grid select,
 .quote-basics-grid input {
-  min-height: 48px;
-  height: 48px;
-  padding: 12px 14px;
-  font-size: 1rem;
+  min-height: 32px;
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
 }
 
 .stem-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
 }
 
 .stem-copy {
@@ -163,8 +203,8 @@ textarea {
 .stem-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 170px;
+  gap: 6px;
+  min-width: 150px;
 }
 
 .stem-controls input {
@@ -180,9 +220,9 @@ textarea {
 }
 
 .step-button {
-  width: 42px;
-  min-width: 42px;
-  height: 42px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
   border-radius: 12px;
   border: 1px solid var(--border-strong);
   background: var(--surface-muted);
@@ -200,8 +240,8 @@ textarea {
 .stem-card {
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .stem-card input {
@@ -218,7 +258,7 @@ textarea {
 
 label {
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
 label span,
@@ -236,7 +276,7 @@ textarea,
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border-strong);
-  padding: 12px 14px;
+  padding: 9px 12px;
   background: var(--surface-muted);
   color: var(--text);
   letter-spacing: normal;
@@ -285,12 +325,30 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.summary-row > * {
+  min-width: 0;
+}
+
+.summary-row p,
+.summary-row span,
+.summary-row strong,
+.composition-item span,
+label span,
+.invoice-grid-row p,
+.invoice-grid-row strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .summary-panel {
   position: sticky;
   top: 16px;
   align-self: start;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .schema-card,
@@ -425,10 +483,18 @@ textarea {
 .button-row,
 .builder-toolbar {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+}
+
+.builder-toolbar-actions {
+  justify-content: flex-end;
+}
+
+.mobile-jump-button {
+  display: none;
 }
 
 .hero-meta-row .status-banner {
@@ -441,15 +507,15 @@ textarea {
 
 .step-grid {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .step-card {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 16px;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface-soft);
 }
@@ -474,7 +540,7 @@ textarea {
 
 .section-heading {
   display: grid;
-  gap: 6px;
+  gap: 2px;
 }
 
 .compact-heading {
@@ -555,7 +621,22 @@ textarea {
 
 @media (min-width: 900px) {
   .layout-grid {
-    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  }
+
+  .quote-builder-panel {
+    gap: 1px;
+  }
+
+  .quote-builder-panel .field-grid,
+  .quote-builder-panel .catalog-grid,
+  .quote-builder-panel .stack-gap {
+    gap: 6px;
+  }
+
+  .quote-builder-panel .quote-basics-grid {
+    gap: 6px;
+    align-content: start;
   }
 
   .three-up-lg {
@@ -563,11 +644,19 @@ textarea {
   }
 
   .step-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .operator-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1180px) {
+  .summary-panel .two-up,
+  .summary-panel .responsive-two-up {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -630,9 +719,195 @@ textarea {
   padding-bottom: 18px;
 }
 
+.sale-export-panel,
+.invoice-panel {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.invoice-preview-shell {
+  padding: 4px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(157, 23, 77, 0.04), rgba(255, 255, 255, 0.96));
+  border: 1px solid var(--border);
+}
+
+.invoice-document-card {
+  background: #fff;
+  color: #1f2937;
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.05);
+  width: min(190mm, 100%);
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.invoice-document-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.invoice-brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.invoice-brand-block h3,
+.invoice-brand-block p {
+  margin: 0;
+}
+
+.invoice-logo {
+  width: 78px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.invoice-id-block {
+  text-align: right;
+  display: grid;
+  gap: 2px;
+}
+
+.invoice-title-word {
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  color: #111827;
+}
+
+.invoice-top-meta-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.invoice-city-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #9d174d;
+  color: #fff;
+  font-weight: 700;
+}
+
+.invoice-party-card,
+.invoice-note-card,
+.invoice-totals-card,
+.invoice-table-card {
+  border: 1px solid #f0d8e2;
+  border-radius: 12px;
+  background: #fffdfd;
+}
+
+.invoice-party-card,
+.invoice-note-card,
+.invoice-totals-card {
+  padding: 10px 12px;
+}
+
+.invoice-table-card {
+  overflow: hidden;
+}
+
+.invoice-table-head,
+.invoice-grid-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.4fr 0.8fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.invoice-table-head {
+  background: #2f2a2d;
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
+.invoice-table-card .stack-gap {
+  padding: 4px 12px;
+}
+
+.invoice-grid-row {
+  padding: 8px 0;
+  border-bottom: 1px solid #f3e6ec;
+}
+
+.invoice-grid-row:last-child {
+  border-bottom: none;
+}
+
+.invoice-amount-cell {
+  text-align: right;
+}
+
+.invoice-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.invoice-total-row {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #ead5df;
+  font-size: 1.05rem;
+}
+
+.override-lock-chip {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #f5c2d7;
+  background: #fff7fb;
+  color: #9d174d;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media print {
+  .invoice-preview-shell {
+    border: none;
+    background: #fff;
+    padding: 0;
+  }
+
+  .invoice-document-card {
+    min-height: 277mm;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 14px;
+  }
+
+  .invoice-document-card,
+  .invoice-document-top,
+  .invoice-party-card,
+  .invoice-table-card,
+  .invoice-summary-grid,
+  .invoice-note-card,
+  .invoice-totals-card,
+  .invoice-grid-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
 @media (max-width: 640px) {
   .app-shell {
-    padding: 12px;
+    padding: 8px;
   }
 
   .hero-card,
@@ -646,18 +921,27 @@ textarea {
   .catalog-card,
   .details-panel,
   .stem-card {
-    padding: 16px;
+    padding: 10px;
   }
 
   .two-up {
     grid-template-columns: 1fr;
   }
 
+  .quote-builder-panel .quote-basics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .quote-builder-panel .eyebrow {
+    font-size: 0.72rem;
+  }
+
   .layout-grid,
   .stack-gap,
   .field-grid,
   .catalog-grid {
-    gap: 12px;
+    gap: 8px;
   }
 
   .summary-panel {
@@ -667,6 +951,24 @@ textarea {
   .summary-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .invoice-document-top,
+  .invoice-brand-block,
+  .invoice-top-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invoice-table-head,
+  .invoice-grid-row,
+  .invoice-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-id-block,
+  .invoice-amount-cell {
+    text-align: left;
   }
 
   .stem-row {
@@ -696,6 +998,19 @@ textarea {
 
   .hero-actions,
   .compact-button {
+    width: 100%;
+  }
+
+  .mobile-jump-button {
+    display: inline-flex;
+  }
+
+  .builder-toolbar-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .builder-toolbar-actions .compact-button {
     width: 100%;
   }
 

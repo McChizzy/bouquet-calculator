@@ -82,30 +82,14 @@ Build status:
 ## Recommended next build sequence
 
 ### Ticket 1 — Add packaging fee
-**Goal:** Let operators add bouquet packaging as a first-class adjustment.
+**Status:** DONE
 
-**Scope**
-- Add packaging fee input/select
-- Include it in summary totals
-- Include it in internal and customer quote output
-
-**Acceptance criteria**
-- Operator can add packaging without using manual override
-- Packaging appears as its own line item in quote output
+Packaging fee is now a first-class adjustment in the quote flow and quote outputs.
 
 ### Ticket 2 — Add arrangement premium
-**Goal:** Support labor / design complexity as a visible pricing control.
+**Status:** DONE
 
-**Scope**
-- Add arrangement premium input
-- Support either flat amount or percentage
-- Show premium clearly in quote summary
-
-**Recommendation:** Start with flat amount for MVP. It is simpler and easier to explain.
-
-**Acceptance criteria**
-- Operator can add arrangement premium without editing base stem counts
-- Quote shows arrangement premium as a separate adjustment
+Arrangement premium is now a first-class adjustment with flat or percentage mode.
 
 ### Ticket 3 — Improve mixed bouquet operator flow
 **Goal:** Make custom bouquet building feel more like a real florist quoting workflow.
@@ -131,16 +115,9 @@ Build status:
 - Operator can change validity window before copying quote
 
 ### Ticket 5 — Add saved quotes (local/internal)
-**Goal:** Avoid losing quotes between conversations.
+**Status:** IN PROGRESS
 
-**Scope**
-- Save quote draft locally first
-- Store quote metadata: quote ID, city, customer, total, type, created date
-- Add simple quote list / reopen flow
-
-**Acceptance criteria**
-- Operator can reopen at least the most recent quotes
-- No backend required for first version
+Saved quotes now retain export-ready sales record data, and the UI can generate CSV/JSON/webhook-ready payloads for Excel/Notion automation. Direct live sync is still pending credentials/webhook endpoint.
 
 ### Ticket 6 — Add admin pricing surface
 **Goal:** Reduce code-edit dependency when pricing changes.
@@ -163,6 +140,11 @@ If we want the next highest-value MVP increment, do these next:
 4. Saved quotes
 
 That gives Bloomfield a more realistic real-world quoting flow without dragging us into full admin tooling too early.
+
+### Latest pass added
+- mobile jump button from flower builder to bill/quote area
+- packaging fee and arrangement premium controls
+- save quote sales-export prep for Excel/Notion workflows (CSV/JSON/webhook-ready payload)
 
 ---
 
