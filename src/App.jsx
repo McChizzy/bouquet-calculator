@@ -36,13 +36,6 @@ const CUSTOM_PRICES_DRAFT_STORAGE_KEY = 'bloomfield-custom-prices-draft'
 const ADMIN_LAST_APPLIED_STORAGE_KEY = 'bloomfield-admin-last-applied'
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
-const packagingOptions = [0, 2500, 5000, 7500, 10000, 15000, 20000]
-const arrangementPremiumTypeOptions = [
-  { id: 'flat', label: 'Flat amount' },
-  { id: 'percent', label: 'Percent of bouquet subtotal' },
-]
-const arrangementFlatOptions = [0, 2500, 5000, 10000, 15000, 20000, 30000]
-const arrangementPercentOptions = [0, 5, 10, 15, 20, 25]
 const saleExportTargetOptions = [
   { id: 'csv', label: 'Download CSV row' },
   { id: 'json', label: 'Copy JSON payload' },
@@ -479,9 +472,6 @@ function App() {
   const [quantity, setQuantity] = useState(1)
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [discountPercent, setDiscountPercent] = useState(0)
-  const [packagingFee, setPackagingFee] = useState(0)
-  const [arrangementPremiumType, setArrangementPremiumType] = useState('flat')
-  const [arrangementPremiumValue, setArrangementPremiumValue] = useState(0)
   const [validityPreset, setValidityPreset] = useState('24h')
   const [customValidityNote, setCustomValidityNote] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -532,11 +522,8 @@ function App() {
         band,
         deliveryFee,
         discountPercent,
-        packagingFee,
-        arrangementPremiumType,
-        arrangementPremiumValue,
       }),
-    [arrangementPremiumType, arrangementPremiumValue, band, city, customSelections, deliveryFee, discountPercent, packagingFee, quantity, quoteType, selectedCatalog],
+    [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
   )
 
   const manualOverrideValue = Number(manualOverrideTotal)
@@ -617,20 +604,8 @@ function App() {
         })
     }
 
-    const normalizedPackagingFee = Number(packagingFee) || 0
-    const normalizedArrangementValue = Number(arrangementPremiumValue) || 0
-    const arrangementPremiumAmount = arrangementPremiumType === 'percent'
-      ? Math.round(subtotal * (normalizedArrangementValue / 100))
-      : normalizedArrangementValue
     const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
     const adjustments = [
-      { label: 'Packaging', amount: normalizedPackagingFee },
-      {
-        label: arrangementPremiumType === 'percent'
-          ? `Arrangement premium (${formatPercentage(normalizedArrangementValue)})`
-          : 'Arrangement premium',
-        amount: arrangementPremiumAmount,
-      },
       { label: 'Delivery', amount: deliveryFee },
       { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
     ].filter((item) => item.amount !== 0)
@@ -641,10 +616,8 @@ function App() {
       total: subtotal + adjustments.reduce((sum, item) => sum + item.amount, 0),
       lineItems,
       notes,
-      packagingFee: normalizedPackagingFee,
-      arrangementPremiumAmount,
     }
-  }, [arrangementPremiumType, arrangementPremiumValue, city, customSelections, deliveryFee, discountPercent, packagingFee, quoteType, selectedCatalog])
+  }, [city, customSelections, deliveryFee, discountPercent, quoteType, selectedCatalog])
 
   const quoteText = useMemo(() => {
     const introLines = [
@@ -862,27 +835,32 @@ function App() {
   const saleExportRecord = useMemo(() => {
     const now = new Date()
     const wholesaleHasGaps = wholesaleSummary.notes.length > 0 || (quoteType === 'catalog' && wholesaleSummary.subtotal === 0)
+    const otherExpenses = deliveryFee
+    const costAmount = wholesaleSummary.total
+    const salePrice = effectiveTotal
+    const profit = salePrice - costAmount - otherExpenses
     return {
       quoteId,
       invoiceNumber,
       createdAt: now.toISOString(),
-      city: getCityLabel(city),
-      quoteType,
+      date: now.toISOString().slice(0, 10),
+      description: productLabel,
+      location: getCityLabel(city),
+      costAmount,
+      salePrice,
+      otherExpenses,
+      profit,
+      comments: otherExpenses > 0 ? 'Delivery fee' : '',
+      deliveryDate: '',
+      deliveryStatus: '',
+      netProfit: profit,
       customerName: customerName || '',
       recipientName: recipientName || '',
       occasion: occasion || '',
-      productLabel,
-      salePrice: effectiveTotal,
+      quoteType,
       saleSubtotal: summary.subtotal,
-      packagingFee,
-      arrangementPremiumType,
-      arrangementPremiumValue,
-      arrangementPremiumAmount: summary.arrangementPremiumAmount || 0,
-      deliveryFee,
       discountPercent,
       discountAmount: summary.discountAmount,
-      costPrice: wholesaleSummary.total,
-      costSubtotal: wholesaleSummary.subtotal,
       costPriceStatus: wholesaleHasGaps ? 'partial_or_missing' : 'confirmed',
       costPriceNotes: wholesaleSummary.notes,
       lineItems: summary.lineItems,
@@ -890,36 +868,24 @@ function App() {
       validityNote,
       syncHint: 'Use this payload with Excel/Notion automation via Make, Zapier, Power Automate, or a webhook endpoint.',
     }
-  }, [arrangementPremiumType, arrangementPremiumValue, city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, packagingFee, productLabel, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
+  }, [city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, productLabel, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
 
   const saleExportCsv = useMemo(() => {
     const headers = [
-      'quote_id','invoice_number','created_at','city','quote_type','customer_name','recipient_name','occasion','product_label','sale_price','sale_subtotal','cost_price','cost_subtotal','cost_price_status','packaging_fee','arrangement_premium_type','arrangement_premium_value','arrangement_premium_amount','delivery_fee','discount_percent','discount_amount','validity_note','cost_price_notes'
+      'Date','Description','Location','Cost Amount','Sale Price','Other Expenses','Profit','Comments(for other expenses)','Delivery Date','Delivery Status','Net Profit'
     ]
     const values = [
-      saleExportRecord.quoteId,
-      saleExportRecord.invoiceNumber,
-      saleExportRecord.createdAt,
-      saleExportRecord.city,
-      saleExportRecord.quoteType,
-      saleExportRecord.customerName,
-      saleExportRecord.recipientName,
-      saleExportRecord.occasion,
-      saleExportRecord.productLabel,
+      saleExportRecord.date,
+      saleExportRecord.description,
+      saleExportRecord.location,
+      saleExportRecord.costAmount,
       saleExportRecord.salePrice,
-      saleExportRecord.saleSubtotal,
-      saleExportRecord.costPrice,
-      saleExportRecord.costSubtotal,
-      saleExportRecord.costPriceStatus,
-      saleExportRecord.packagingFee,
-      saleExportRecord.arrangementPremiumType,
-      saleExportRecord.arrangementPremiumValue,
-      saleExportRecord.arrangementPremiumAmount,
-      saleExportRecord.deliveryFee,
-      saleExportRecord.discountPercent,
-      saleExportRecord.discountAmount,
-      saleExportRecord.validityNote,
-      saleExportRecord.costPriceNotes.join(' | '),
+      saleExportRecord.otherExpenses,
+      saleExportRecord.profit,
+      saleExportRecord.comments,
+      saleExportRecord.deliveryDate,
+      saleExportRecord.deliveryStatus,
+      saleExportRecord.netProfit,
     ]
     const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
     return `${headers.join(',')}\n${values.map(escape).join(',')}`
@@ -1110,9 +1076,6 @@ function App() {
       quantity,
       deliveryFee,
       discountPercent,
-      packagingFee,
-      arrangementPremiumType,
-      arrangementPremiumValue,
       validityPreset,
       customValidityNote,
       customerName,
@@ -1241,9 +1204,6 @@ function App() {
     setQuantity(savedQuote.quantity || 1)
     setDeliveryFee(savedQuote.deliveryFee || 0)
     setDiscountPercent(savedQuote.discountPercent || 0)
-    setPackagingFee(savedQuote.packagingFee || 0)
-    setArrangementPremiumType(savedQuote.arrangementPremiumType || 'flat')
-    setArrangementPremiumValue(savedQuote.arrangementPremiumValue || 0)
     setValidityPreset(savedQuote.validityPreset || '24h')
     setCustomValidityNote(savedQuote.customValidityNote || '')
     setCustomerName(savedQuote.customerName || '')
@@ -1324,9 +1284,6 @@ function App() {
     setQuantity(1)
     setDeliveryFee(0)
     setDiscountPercent(0)
-    setPackagingFee(0)
-    setArrangementPremiumType('flat')
-    setArrangementPremiumValue(0)
     setValidityPreset('24h')
     setCustomValidityNote('')
     setCustomerName('')
@@ -1816,38 +1773,6 @@ function App() {
                   <option value="0">No delivery fee</option>
                   {deliveryOptions.map((amount) => (
                     <option key={`delivery-${amount}`} value={amount}>{formatCurrency(amount)}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="field-grid two-up responsive-two-up">
-              <label>
-                <span>Packaging fee</span>
-                <select value={packagingFee} onChange={(event) => setPackagingFee(Number(event.target.value) || 0)}>
-                  {packagingOptions.map((amount) => (
-                    <option key={`packaging-${amount}`} value={amount}>{amount === 0 ? 'No packaging fee' : formatCurrency(amount)}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span>Arrangement premium mode</span>
-                <select value={arrangementPremiumType} onChange={(event) => setArrangementPremiumType(event.target.value)}>
-                  {arrangementPremiumTypeOptions.map((option) => (
-                    <option key={option.id} value={option.id}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="field-grid two-up responsive-two-up">
-              <label>
-                <span>{arrangementPremiumType === 'percent' ? 'Arrangement premium (%)' : 'Arrangement premium amount'}</span>
-                <select value={arrangementPremiumValue} onChange={(event) => setArrangementPremiumValue(Number(event.target.value) || 0)}>
-                  {(arrangementPremiumType === 'percent' ? arrangementPercentOptions : arrangementFlatOptions).map((amount) => (
-                    <option key={`arrangement-${arrangementPremiumType}-${amount}`} value={amount}>
-                      {arrangementPremiumType === 'percent'
-                        ? (amount === 0 ? 'No arrangement premium' : formatPercentage(amount))
-                        : (amount === 0 ? 'No arrangement premium' : formatCurrency(amount))}
-                    </option>
                   ))}
                 </select>
               </label>

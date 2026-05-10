@@ -159,9 +159,6 @@ export function createQuoteSummary({
   band,
   deliveryFee,
   discountPercent,
-  packagingFee = 0,
-  arrangementPremiumType = 'flat',
-  arrangementPremiumValue = 0,
 }) {
   const lineItems = []
   let subtotal = 0
@@ -231,21 +228,9 @@ export function createQuoteSummary({
       })
   }
 
-  const normalizedPackagingFee = Number(packagingFee) || 0
-  const normalizedArrangementValue = Number(arrangementPremiumValue) || 0
-  const arrangementPremiumAmount = arrangementPremiumType === 'percent'
-    ? Math.round(subtotal * (normalizedArrangementValue / 100))
-    : normalizedArrangementValue
   const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
 
   const adjustments = [
-    { label: 'Packaging', amount: normalizedPackagingFee },
-    {
-      label: arrangementPremiumType === 'percent'
-        ? `Arrangement premium (${formatPercentage(normalizedArrangementValue)})`
-        : 'Arrangement premium',
-      amount: arrangementPremiumAmount,
-    },
     { label: 'Delivery', amount: deliveryFee },
     { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
   ].filter((item) => item.amount !== 0)
@@ -262,9 +247,5 @@ export function createQuoteSummary({
     quoteType,
     discountAmount,
     discountPercent: discountPercent || 0,
-    packagingFee: normalizedPackagingFee,
-    arrangementPremiumAmount,
-    arrangementPremiumType,
-    arrangementPremiumValue: normalizedArrangementValue,
   }
 }
