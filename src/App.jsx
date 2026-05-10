@@ -26,6 +26,7 @@ const { cities, priceBandOptions, quoteTypes } = pricingCatalog
 const SAVED_QUOTES_STORAGE_KEY = 'bloomfield-saved-quotes'
 const SAVED_INVOICES_STORAGE_KEY = 'bloomfield-saved-invoices'
 const COMPANY_PROFILE_STORAGE_KEY = 'bloomfield-company-profile'
+const ORDER_NUMBER_STORAGE_KEY = 'bloomfield-income-order-number'
 const DEFAULT_COMPANY_PROFILE = {
   companyPhone: '+2347011203325',
   companyInstagram: 'bloomfieldflowers_',
@@ -132,6 +133,16 @@ function getInitialCompanyProfile() {
   } catch {
     return DEFAULT_COMPANY_PROFILE
   }
+}
+
+function getInitialOrderNumber() {
+  const raw = window.localStorage.getItem(ORDER_NUMBER_STORAGE_KEY)
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1
+}
+
+function persistOrderNumber(orderNumber) {
+  window.localStorage.setItem(ORDER_NUMBER_STORAGE_KEY, String(orderNumber))
 }
 
 function downloadFile(filename, content, mimeType) {
@@ -338,6 +349,15 @@ function getProductLabel({ quoteType, selectedCatalog, customSelections }) {
   return `${nonZeroItems[0].component.name}, ${nonZeroItems[1].component.name}, and more custom bouquet`
 }
 
+function getBouquetTypeLabel({ quoteType, selectedCatalog, customSelections }) {
+  if (quoteType === 'catalog' && selectedCatalog) return selectedCatalog.name
+
+  const nonZeroItems = customSelections.filter((selection) => selection.count > 0)
+  if (nonZeroItems.length === 0) return 'Custom bouquet'
+
+  return nonZeroItems.map((selection) => selection.component.name).join(', ')
+}
+
 function getQuoteStatus({ summary, manualOverrideEnabled, manualOverrideReason, manualOverrideValid }) {
   if (summary.lineItems.length === 0) {
     return {
@@ -484,6 +504,7 @@ function App() {
   const [savedQuotes, setSavedQuotes] = useState(() => getSavedQuotes())
   const [savedInvoices, setSavedInvoices] = useState(() => getSavedInvoices())
   const [invoiceNumber, setInvoiceNumber] = useState(() => createQuoteId().replace('BFF', 'INV'))
+  const [orderNumber, setOrderNumber] = useState(() => getInitialOrderNumber())
   const [companyProfile, setCompanyProfile] = useState(() => getInitialCompanyProfile())
   const [saleExportTarget, setSaleExportTarget] = useState('csv')
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
@@ -549,6 +570,8 @@ function App() {
   const selectedCustomStemCount = getCustomSelectionCount(customSelections)
   const selectedCustomLineCount = getCustomLineCount(customSelections)
   const productLabel = getProductLabel({ quoteType, selectedCatalog, customSelections })
+  const bouquetTypeLabel = getBouquetTypeLabel({ quoteType, selectedCatalog, customSelections })
+  const orderDescription = `Order ${orderNumber}`
   const companyPhone = DEFAULT_COMPANY_PROFILE.companyPhone
   const companyInstagram = DEFAULT_COMPANY_PROFILE.companyInstagram
   const companyLocation = companyProfile.companyLocation || ''
@@ -842,9 +865,11 @@ function App() {
     return {
       quoteId,
       invoiceNumber,
+      orderNumber,
       createdAt: now.toISOString(),
       date: now.toISOString().slice(0, 10),
-      description: productLabel,
+      description: orderDescription,
+      bouquetType: bouquetTypeLabel,
       location: getCityLabel(city),
       costAmount,
       salePrice,
@@ -853,7 +878,7 @@ function App() {
       comments: otherExpenses > 0 ? 'Delivery fee' : '',
       deliveryDate: '',
       deliveryStatus: '',
-      netProfit: profit,
+      netProfit: '',
       customerName: customerName || '',
       recipientName: recipientName || '',
       occasion: occasion || '',
@@ -868,15 +893,16 @@ function App() {
       validityNote,
       syncHint: 'Use this payload with Excel/Notion automation via Make, Zapier, Power Automate, or a webhook endpoint.',
     }
-  }, [city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, productLabel, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
+  }, [bouquetTypeLabel, city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, orderDescription, orderNumber, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
 
   const saleExportCsv = useMemo(() => {
     const headers = [
-      'Date','Description','Location','Cost Amount','Sale Price','Other Expenses','Profit','Comments(for other expenses)','Delivery Date','Delivery Status','Net Profit'
+      'Date','Description','Bouquet Type','Location','Cost Amount','Sale Price','Other Expenses','Profit','Comments(for other expenses)','Delivery Date','Delivery Status','Net Profit'
     ]
     const values = [
       saleExportRecord.date,
       saleExportRecord.description,
+      saleExportRecord.bouquetType,
       saleExportRecord.location,
       saleExportRecord.costAmount,
       saleExportRecord.salePrice,
@@ -1091,12 +1117,16 @@ function App() {
       previewLabel: productLabel,
       previewTotal: effectiveTotal,
       invoiceNumber,
+      orderNumber,
       saleExportRecord,
     }
 
     const nextQuotes = [savedQuote, ...savedQuotes.filter((item) => item.id !== quoteId)].slice(0, 20)
     setSavedQuotes(nextQuotes)
     persistSavedQuotes(nextQuotes)
+    const nextOrderNumber = orderNumber + 1
+    setOrderNumber(nextOrderNumber)
+    persistOrderNumber(nextOrderNumber)
     window.alert('Quote saved locally and prepared for sales export.')
   }
 
@@ -1197,6 +1227,7 @@ function App() {
 
     setQuoteId(savedQuote.id || createQuoteId())
     setInvoiceNumber(savedQuote.invoiceNumber || (savedQuote.id || createQuoteId()).replace('BFF', 'INV'))
+    setOrderNumber(savedQuote.orderNumber || getInitialOrderNumber())
     setCity(savedQuote.city || cities[0].id)
     setQuoteType(savedQuote.quoteType || 'custom')
     setSelectedCatalogId(savedQuote.selectedCatalogId || catalogProducts[0]?.id || getDefaultCatalogId())
@@ -1277,6 +1308,7 @@ function App() {
     const nextQuoteId = createQuoteId()
     setQuoteId(nextQuoteId)
     setInvoiceNumber(nextQuoteId.replace('BFF', 'INV'))
+    setOrderNumber(getInitialOrderNumber())
     setCity(cities[0].id)
     setQuoteType('custom')
     setSelectedCatalogId(catalogProducts[0]?.id || getDefaultCatalogId())
@@ -1340,6 +1372,12 @@ function App() {
     }))
   }, [companyProfile])
 
+  useEffect(() => {
+    if (Number.isFinite(orderNumber) && orderNumber > 0) {
+      persistOrderNumber(orderNumber)
+    }
+  }, [orderNumber])
+
   return (
     <div className="app-shell">
       <header className="hero-card stack-gap compact">
@@ -1387,7 +1425,9 @@ function App() {
           </div>
           <div className="button-row hero-actions">
             <button type="button" className="secondary-button" onClick={saveCurrentQuote}>Save quote</button>
-            <button type="button" className="secondary-button" onClick={saveCurrentInvoice}>Save invoice</button>
+            {activeRole === OPERATIONS_ROLE && (
+              <button type="button" className="secondary-button" onClick={saveCurrentInvoice}>Save invoice</button>
+            )}
             <button type="button" className="secondary-button" onClick={resetQuote}>Start new quote</button>
           </div>
         </div>
@@ -1416,19 +1456,21 @@ function App() {
                   </div>
                 )) : <p className="muted small">No saved quotes yet.</p>}
               </div>
-              <div className="stack-gap compact">
-                <p className="muted small"><strong>Invoices</strong></p>
-                {savedInvoices.length > 0 ? savedInvoices.slice(0, 5).map((item) => (
-                  <div key={item.id} className="schema-card stack-gap compact">
-                    <div className="summary-row">
-                      <strong>{item.productLabel || 'Saved invoice'}</strong>
-                      <span>{formatCurrency(item.total || 0)}</span>
+              {activeRole === OPERATIONS_ROLE && (
+                <div className="stack-gap compact">
+                  <p className="muted small"><strong>Invoices</strong></p>
+                  {savedInvoices.length > 0 ? savedInvoices.slice(0, 5).map((item) => (
+                    <div key={item.id} className="schema-card stack-gap compact">
+                      <div className="summary-row">
+                        <strong>{item.productLabel || 'Saved invoice'}</strong>
+                        <span>{formatCurrency(item.total || 0)}</span>
+                      </div>
+                      <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.id}</p>
+                      <p className="muted small">Saved locally for reuse.</p>
                     </div>
-                    <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.id}</p>
-                    <p className="muted small">Saved locally for reuse.</p>
-                  </div>
-                )) : <p className="muted small">No saved invoices yet.</p>}
-              </div>
+                  )) : <p className="muted small">No saved invoices yet.</p>}
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -1722,16 +1764,30 @@ function App() {
 
           <div className="stack-gap compact">
             <h3>Customer details</h3>
-            <div className="field-grid two-up">
+            <div className="field-grid two-up three-up-lg">
               <label>
-                <span>Invoice number</span>
-                <input value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} placeholder="INV-2026-0001" />
+                <span>Order number</span>
+                <input type="number" min="1" value={orderNumber} onChange={(event) => setOrderNumber(Math.max(1, Number(event.target.value) || 1))} />
               </label>
               <label>
-                <span>Invoice date</span>
-                <input readOnly value={invoiceDateLabel} />
+                <span>Income sheet description</span>
+                <input readOnly value={orderDescription} />
               </label>
+              {activeRole === OPERATIONS_ROLE && (
+                <label>
+                  <span>Invoice number</span>
+                  <input value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} placeholder="INV-2026-0001" />
+                </label>
+              )}
             </div>
+            {activeRole === OPERATIONS_ROLE && (
+              <div className="field-grid two-up">
+                <label>
+                  <span>Invoice date</span>
+                  <input readOnly value={invoiceDateLabel} />
+                </label>
+              </div>
+            )}
             <div className="field-grid two-up">
               <label>
                 <span>Customer name</span>
@@ -1883,64 +1939,69 @@ function App() {
             </>
           )}
 
-          <div className="stack-gap compact sale-export-panel">
-            <h3>Save quote to sales tools</h3>
-            <p className="muted small">This prepares a clean sales record for Excel, Notion, or automation. Direct live sync can be wired later via webhook or Power Automate/Make.</p>
-            <div className="field-grid two-up responsive-two-up">
+          {activeRole === OPERATIONS_ROLE && (
+            <div className="stack-gap compact sale-export-panel">
+              <h3>Save quote to sales tools</h3>
+              <p className="muted small">This prepares a clean sales record for Excel, Notion, or automation. Direct live sync can be wired later via webhook or Power Automate/Make.</p>
+              <div className="field-grid two-up responsive-two-up">
+                <label>
+                  <span>Export target</span>
+                  <select value={saleExportTarget} onChange={(event) => setSaleExportTarget(event.target.value)}>
+                    {saleExportTargetOptions.map((option) => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="schema-card stack-gap compact">
+                  <p className="muted small"><strong>Description:</strong> {saleExportRecord.description}</p>
+                  <p className="muted small"><strong>Bouquet type:</strong> {saleExportRecord.bouquetType}</p>
+                  <p className="muted small"><strong>Sale price:</strong> {formatCurrency(saleExportRecord.salePrice)}</p>
+                  <p className="muted small"><strong>Cost amount:</strong> {formatCurrency(saleExportRecord.costAmount)}</p>
+                  <p className="muted small"><strong>Cost status:</strong> {saleExportRecord.costPriceStatus === 'confirmed' ? 'Confirmed wholesale total' : 'Partial / missing wholesale inputs'}</p>
+                </div>
+              </div>
+              <div className="button-row">
+                <button className="primary-button" onClick={saveCurrentQuote}>Save quote + sale record</button>
+                {saleExportTarget === 'csv'
+                  ? <button className="secondary-button" onClick={downloadSaleCsv}>Download sale CSV</button>
+                  : <button className="secondary-button" onClick={copySaleExportPayload}>{saleExportTarget === 'webhook' ? 'Copy webhook payload' : 'Copy sales JSON'}</button>}
+              </div>
+              {saleExportRecord.costPriceNotes.length > 0 && (
+                <div className="note-box soft-note">
+                  {saleExportRecord.costPriceNotes.map((note) => <p key={`cost-note-${note}`}>{note}</p>)}
+                </div>
+              )}
               <label>
-                <span>Export target</span>
-                <select value={saleExportTarget} onChange={(event) => setSaleExportTarget(event.target.value)}>
-                  {saleExportTargetOptions.map((option) => (
-                    <option key={option.id} value={option.id}>{option.label}</option>
-                  ))}
-                </select>
+                <span>{saleExportTarget === 'csv' ? 'CSV preview' : 'Payload preview'}</span>
+                <textarea
+                  readOnly
+                  rows={8}
+                  value={saleExportTarget === 'csv'
+                    ? saleExportCsv
+                    : JSON.stringify(
+                      saleExportTarget === 'webhook'
+                        ? { event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }
+                        : saleExportRecord,
+                      null,
+                      2,
+                    )}
+                />
               </label>
-              <div className="schema-card stack-gap compact">
-                <p className="muted small"><strong>Sale price:</strong> {formatCurrency(saleExportRecord.salePrice)}</p>
-                <p className="muted small"><strong>Cost price:</strong> {formatCurrency(saleExportRecord.costPrice)}</p>
-                <p className="muted small"><strong>Cost status:</strong> {saleExportRecord.costPriceStatus === 'confirmed' ? 'Confirmed wholesale total' : 'Partial / missing wholesale inputs'}</p>
-              </div>
             </div>
-            <div className="button-row">
-              <button className="primary-button" onClick={saveCurrentQuote}>Save quote + sale record</button>
-              {saleExportTarget === 'csv'
-                ? <button className="secondary-button" onClick={downloadSaleCsv}>Download sale CSV</button>
-                : <button className="secondary-button" onClick={copySaleExportPayload}>{saleExportTarget === 'webhook' ? 'Copy webhook payload' : 'Copy sales JSON'}</button>}
-            </div>
-            {saleExportRecord.costPriceNotes.length > 0 && (
-              <div className="note-box soft-note">
-                {saleExportRecord.costPriceNotes.map((note) => <p key={`cost-note-${note}`}>{note}</p>)}
-              </div>
-            )}
-            <label>
-              <span>{saleExportTarget === 'csv' ? 'CSV preview' : 'Payload preview'}</span>
-              <textarea
-                readOnly
-                rows={8}
-                value={saleExportTarget === 'csv'
-                  ? saleExportCsv
-                  : JSON.stringify(
-                    saleExportTarget === 'webhook'
-                      ? { event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }
-                      : saleExportRecord,
-                    null,
-                    2,
-                  )}
-              />
-            </label>
-          </div>
+          )}
 
-          <div className="stack-gap compact invoice-panel">
-            <h3>Invoice</h3>
-            <p className="muted small">Branded invoice preview with proper PDF export, plus HTML backup and print support.</p>
-            <div className="button-row">
-              <button className="primary-button" onClick={saveCurrentInvoice}>Save invoice</button>
-              <button className="secondary-button" onClick={downloadInvoicePdf} disabled={isGeneratingPdf}>{isGeneratingPdf ? 'Generating PDF…' : 'Download PDF'}</button>
-              <button className="secondary-button" onClick={printInvoice}>Print</button>
-            </div>
-            <p className="muted small">Download PDF gives the cleanest output. Browser print may still add browser headers/footers.</p>
-            <div className="invoice-preview-shell">
-              <div ref={invoiceDocumentRef} className="invoice-document-card">
+          {activeRole === OPERATIONS_ROLE && (
+            <div className="stack-gap compact invoice-panel">
+              <h3>Invoice</h3>
+              <p className="muted small">Branded invoice preview with proper PDF export, plus HTML backup and print support.</p>
+              <div className="button-row">
+                <button className="primary-button" onClick={saveCurrentInvoice}>Save invoice</button>
+                <button className="secondary-button" onClick={downloadInvoicePdf} disabled={isGeneratingPdf}>{isGeneratingPdf ? 'Generating PDF…' : 'Download PDF'}</button>
+                <button className="secondary-button" onClick={printInvoice}>Print</button>
+              </div>
+              <p className="muted small">Download PDF gives the cleanest output. Browser print may still add browser headers/footers.</p>
+              <div className="invoice-preview-shell">
+                <div ref={invoiceDocumentRef} className="invoice-document-card">
                 <div className="invoice-document-top">
                   <div className="invoice-brand-block">
                     <img src={bloomfieldLogo} alt="Bloomfield Flowers logo" className="invoice-logo" />
@@ -2012,6 +2073,7 @@ function App() {
               </div>
             </div>
           </div>
+          )}
 
           <button className="primary-button" onClick={copyCustomerQuote}>Copy Customer WhatsApp quote</button>
           <button className="secondary-button" onClick={copyCustomerSendText}>Copy Short customer send</button>
