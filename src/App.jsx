@@ -27,6 +27,7 @@ const SAVED_QUOTES_STORAGE_KEY = 'bloomfield-saved-quotes'
 const SAVED_INVOICES_STORAGE_KEY = 'bloomfield-saved-invoices'
 const COMPANY_PROFILE_STORAGE_KEY = 'bloomfield-company-profile'
 const ORDER_NUMBER_STORAGE_KEY = 'bloomfield-income-order-number'
+const SALES_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxZ_5ZqSnF_mBjFjR97jf8C83rkyqzJRdxFSG5k1SG91buXG0N-fKsb-Vnx3eVTBz9f/exec'
 const DEFAULT_COMPANY_PROFILE = {
   companyPhone: '+2347011203325',
   companyInstagram: 'bloomfieldflowers_',
@@ -40,7 +41,7 @@ const discountOptions = [5, 10, 15, 20, 25, 30]
 const saleExportTargetOptions = [
   { id: 'csv', label: 'Download CSV row' },
   { id: 'json', label: 'Copy JSON payload' },
-  { id: 'webhook', label: 'Copy webhook payload' },
+  { id: 'webhook', label: 'Copy webhook body' },
 ]
 const validityOptions = [
   { id: '24h', label: '24 hours', note: 'Valid for 24 hours, subject to flower availability.' },
@@ -507,6 +508,8 @@ function App() {
   const [orderNumber, setOrderNumber] = useState(() => getInitialOrderNumber())
   const [companyProfile, setCompanyProfile] = useState(() => getInitialCompanyProfile())
   const [saleExportTarget, setSaleExportTarget] = useState('csv')
+  const [saleSyncFeedback, setSaleSyncFeedback] = useState('')
+  const [isSavingSaleRecord, setIsSavingSaleRecord] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const invoiceDocumentRef = useRef(null)
   const quoteSummaryRef = useRef(null)
@@ -931,16 +934,43 @@ function App() {
   }
 
   async function copySaleExportPayload() {
-    const payload = saleExportTarget === 'webhook'
-      ? JSON.stringify({ event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }, null, 2)
-      : JSON.stringify(saleExportRecord, null, 2)
+    const payload = JSON.stringify(saleExportRecord, null, 2)
 
     try {
       await navigator.clipboard.writeText(payload)
-      window.alert(saleExportTarget === 'webhook' ? 'Webhook-ready payload copied.' : 'Sales JSON payload copied.')
+      window.alert(saleExportTarget === 'webhook' ? 'Webhook body copied.' : 'Sales JSON payload copied.')
     } catch {
       window.alert('Clipboard unavailable. Copy the sales payload manually from the export panel.')
     }
+  }
+
+  async function syncSaleRecordToWebhook(record) {
+    const response = await fetch(SALES_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(record),
+    })
+
+    const rawText = await response.text()
+    let parsed = null
+
+    try {
+      parsed = rawText ? JSON.parse(rawText) : null
+    } catch {
+      parsed = null
+    }
+
+    if (!response.ok) {
+      throw new Error(`Webhook returned HTTP ${response.status}`)
+    }
+
+    if (parsed && parsed.ok === false) {
+      throw new Error(parsed.error || 'Webhook rejected the sale record.')
+    }
+
+    return parsed || { ok: true }
   }
 
   function downloadSaleCsv() {
@@ -1091,8 +1121,8 @@ function App() {
     setAdminFeedback('Admin drafts reset to project defaults.')
   }
 
-  function saveCurrentQuote() {
-    const savedQuote = {
+  function buildSavedQuote() {
+    return {
       id: quoteId,
       createdAt: new Date().toISOString(),
       city,
@@ -1120,14 +1150,39 @@ function App() {
       orderNumber,
       saleExportRecord,
     }
+  }
 
+  function saveCurrentQuote() {
+    const savedQuote = buildSavedQuote()
     const nextQuotes = [savedQuote, ...savedQuotes.filter((item) => item.id !== quoteId)].slice(0, 20)
     setSavedQuotes(nextQuotes)
     persistSavedQuotes(nextQuotes)
-    const nextOrderNumber = orderNumber + 1
-    setOrderNumber(nextOrderNumber)
-    persistOrderNumber(nextOrderNumber)
-    window.alert('Quote saved locally and prepared for sales export.')
+    window.alert('Quote saved locally.')
+  }
+
+  async function saveCurrentQuoteAndSync() {
+    const savedQuote = buildSavedQuote()
+    const nextQuotes = [savedQuote, ...savedQuotes.filter((item) => item.id !== quoteId)].slice(0, 20)
+    setSavedQuotes(nextQuotes)
+    persistSavedQuotes(nextQuotes)
+
+    setIsSavingSaleRecord(true)
+    setSaleSyncFeedback('')
+
+    try {
+      await syncSaleRecordToWebhook(saleExportRecord)
+      const nextOrderNumber = orderNumber + 1
+      setOrderNumber(nextOrderNumber)
+      persistOrderNumber(nextOrderNumber)
+      setSaleSyncFeedback(`Income sheet synced successfully via webhook. Next order is Order ${nextOrderNumber}.`)
+      window.alert('Quote saved locally and appended to the income sheet.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown webhook sync error.'
+      setSaleSyncFeedback(`Local save completed, but income sheet sync failed: ${message}`)
+      window.alert(`Quote saved locally, but income sheet sync failed: ${message}`)
+    } finally {
+      setIsSavingSaleRecord(false)
+    }
   }
 
   function saveCurrentInvoice() {
@@ -1942,7 +1997,7 @@ function App() {
           {activeRole === OPERATIONS_ROLE && (
             <div className="stack-gap compact sale-export-panel">
               <h3>Save quote to sales tools</h3>
-              <p className="muted small">This prepares a clean sales record for Excel, Notion, or automation. Direct live sync can be wired later via webhook or Power Automate/Make.</p>
+              <p className="muted small">This now posts directly to the configured Apps Script webhook and appends the sale record to the income sheet when the webhook succeeds.</p>
               <div className="field-grid two-up responsive-two-up">
                 <label>
                   <span>Export target</span>
@@ -1961,11 +2016,16 @@ function App() {
                 </div>
               </div>
               <div className="button-row">
-                <button className="primary-button" onClick={saveCurrentQuote}>Save quote + sale record</button>
+                <button className="primary-button" onClick={saveCurrentQuoteAndSync} disabled={isSavingSaleRecord}>{isSavingSaleRecord ? 'Saving + syncing…' : 'Save quote + sale record'}</button>
                 {saleExportTarget === 'csv'
                   ? <button className="secondary-button" onClick={downloadSaleCsv}>Download sale CSV</button>
-                  : <button className="secondary-button" onClick={copySaleExportPayload}>{saleExportTarget === 'webhook' ? 'Copy webhook payload' : 'Copy sales JSON'}</button>}
+                  : <button className="secondary-button" onClick={copySaleExportPayload}>{saleExportTarget === 'webhook' ? 'Copy webhook body' : 'Copy sales JSON'}</button>}
               </div>
+              {saleSyncFeedback ? (
+                <div className="note-box soft-note">
+                  <p>{saleSyncFeedback}</p>
+                </div>
+              ) : null}
               {saleExportRecord.costPriceNotes.length > 0 && (
                 <div className="note-box soft-note">
                   {saleExportRecord.costPriceNotes.map((note) => <p key={`cost-note-${note}`}>{note}</p>)}
@@ -1978,13 +2038,7 @@ function App() {
                   rows={8}
                   value={saleExportTarget === 'csv'
                     ? saleExportCsv
-                    : JSON.stringify(
-                      saleExportTarget === 'webhook'
-                        ? { event: 'sale.saved', source: 'bloomfield-bouquet-calculator', record: saleExportRecord }
-                        : saleExportRecord,
-                      null,
-                      2,
-                    )}
+                    : JSON.stringify(saleExportRecord, null, 2)}
                 />
               </label>
             </div>
