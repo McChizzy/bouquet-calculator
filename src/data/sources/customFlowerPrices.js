@@ -1,7 +1,7 @@
 export const customFlowerPriceSource = {
   workbookUrl: 'https://docs.google.com/spreadsheets/d/1dq_lMoO1k5rYt9hfk79GVn2F1P2dDFIi6eE2OtoaTMs/edit?usp=drivesdk',
   sheetName: 'Bloomfield Retail price list',
-  extractedAt: '2026-04-21',
+  extractedAt: '2026-05-20',
 }
 
 export const customFlowerPrices = [
@@ -96,10 +96,10 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 10.',
-    sourceDetail: 'Lagos ₦5,000, Abuja ₦13,000.',
+    sourceDetail: 'Lagos ₦5,000, Abuja ₦15,000.',
     prices: {
       lagos: { type: 'fixed', amount: 5000 },
-      abuja: { type: 'fixed', amount: 13000 },
+      abuja: { type: 'fixed', amount: 15000 },
     },
   },
   {
@@ -149,9 +149,9 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 14.',
-    sourceDetail: 'Lagos ₦7,500. Abuja not confirmed in sheet.',
+    sourceDetail: 'Lagos ₦9,000. Abuja not confirmed in sheet.',
     prices: {
-      lagos: { type: 'fixed', amount: 7500 },
+      lagos: { type: 'fixed', amount: 9000 },
     },
   },
   {

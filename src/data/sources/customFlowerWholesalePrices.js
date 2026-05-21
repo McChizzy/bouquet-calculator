@@ -1,7 +1,7 @@
 export const customFlowerWholesalePriceSource = {
   workbookUrl: 'https://docs.google.com/spreadsheets/d/1dq_lMoO1k5rYt9hfk79GVn2F1P2dDFIi6eE2OtoaTMs/edit?usp=drivesdk',
   sheetName: 'Bloomfield wholesale price list',
-  extractedAt: '2026-04-21',
+  extractedAt: '2026-05-20',
 }
 
 export const customFlowerWholesalePrices = [
@@ -45,6 +45,19 @@ export const customFlowerWholesalePrices = [
     prices: {
       lagos: { type: 'fixed', amount: 10000 },
       abuja: { type: 'fixed', amount: 12000 },
+    },
+  },
+  {
+    id: 'eucalyptus',
+    sku: 'CMP-EUCALYPTUS',
+    name: 'Eucalyptus',
+    unit: 'stem',
+    category: 'greens',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 8.',
+    sourceDetail: 'Eucalyptus (Greens), Lagos ₦2,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 2000 },
     },
   },
   {
@@ -103,6 +116,45 @@ export const customFlowerWholesalePrices = [
     },
   },
   {
+    id: 'limonium',
+    sku: 'CMP-LIMONIUM',
+    name: 'Limonium',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 10.',
+    sourceDetail: 'Limonium, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
+    id: 'sunflower',
+    sku: 'CMP-SUNFLOWER',
+    name: 'Sunflower',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 11.',
+    sourceDetail: 'Sunflower, Lagos ₦5,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 5000 },
+    },
+  },
+  {
+    id: 'solidago',
+    sku: 'CMP-SOLIDAGO',
+    name: 'Solidago',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 12.',
+    sourceDetail: 'Solidago, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
     id: 'ruscus',
     sku: 'CMP-RUSCUS',
     name: 'Ruscus',
@@ -113,6 +165,84 @@ export const customFlowerWholesalePrices = [
     sourceDetail: 'Ruscus (Greens), Lagos ₦2,000. Abuja not confirmed in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 2000 },
+    },
+  },
+  {
+    id: 'gerbera',
+    sku: 'CMP-GERBERA',
+    name: 'Gerbera',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 14.',
+    sourceDetail: 'Gerbera, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
+    id: 'kangaroo',
+    sku: 'CMP-KANGAROO',
+    name: 'Kangaroo',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 15.',
+    sourceDetail: 'Kangaroo, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
+    id: 'veronica',
+    sku: 'CMP-VERONICA',
+    name: 'Veronica',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 16.',
+    sourceDetail: 'Veronica, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
+    id: 'hypericum',
+    sku: 'CMP-HYPERICUM',
+    name: 'Hypericum',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 17.',
+    sourceDetail: 'Hypericum/Berries, Lagos ₦2,500. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 2500 },
+    },
+  },
+  {
+    id: 'alstroemeria',
+    sku: 'CMP-ALSTROEMERIA',
+    name: 'Alstroemeria',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 18.',
+    sourceDetail: 'Alstroemeria, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 3000 },
+    },
+  },
+  {
+    id: 'special-spray-rose',
+    sku: 'CMP-SPECIAL-SPRAY-ROSE',
+    name: 'Special Spray Rose',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 19.',
+    sourceDetail: 'Special Spray Roses, Lagos ₦4,000. Abuja not confirmed in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 4000 },
     },
   },
 ]
