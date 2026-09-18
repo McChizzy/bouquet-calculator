@@ -1,6 +1,7 @@
 // Synced from bloomfield-flowers-site/src/catalog.js — 2026-09-18
-// Image paths use the live website as the CDN; images must be available at bloomfieldflowers.ng.
-// Products without cityPrices use a retail fallback (range or fixed); city-level overrides take priority when available.
+// Products with cityPrices use those directly. Products with a range price follow the site's
+// own convention (Lagos = lower bound, Abuja/PH = upper bound). Single flat prices apply
+// to all cities. No prices are inferred or fabricated beyond what catalog.js records.
 
 const SITE = 'https://bloomfieldflowers.ng'
 
@@ -13,7 +14,7 @@ export const bloomfieldRetailSamples = [
     description: 'Mixed bouquet (S) made with different colors of chrysanthemums, lilac, white, pink roses, and gypsos.',
     image: `${SITE}/images/optimized/barbie-deluxe.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦70,000, Abuja ₦120,000, PH ₦75,000.',
+    sourceDetail: 'cityPrices — Lagos ₦70,000, Abuja ₦120,000, PH ₦75,000.',
     prices: {
       lagos: { type: 'fixed', amount: 70000 },
       abuja: { type: 'fixed', amount: 120000 },
@@ -28,7 +29,7 @@ export const bloomfieldRetailSamples = [
     description: 'A premium rose statement piece featuring 100 roses in red, pink, white, yellow, or purple.',
     image: `${SITE}/images/optimized/century-of-roses.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦700,000, Abuja ₦800,000, PH ₦800,000.',
+    sourceDetail: 'cityPrices — Lagos ₦700,000, Abuja ₦800,000, PH ₦800,000.',
     prices: {
       lagos: { type: 'fixed', amount: 700000 },
       abuja: { type: 'fixed', amount: 800000 },
@@ -43,9 +44,11 @@ export const bloomfieldRetailSamples = [
     description: 'A premium collection of 50 roses styled with custom gypsos letters.',
     image: `${SITE}/images/optimized/bff-collection.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback range ₦390,000 – ₦840,000.',
+    sourceDetail: 'Range ₦390,000–₦840,000 (no cityPrices). Lagos = lower bound, Abuja/PH = upper bound per site convention.',
     prices: {
-      retail: { type: 'range', min: 390000, max: 840000 },
+      lagos: { type: 'fixed', amount: 390000 },
+      abuja: { type: 'fixed', amount: 840000 },
+      portHarcourt: { type: 'fixed', amount: 840000 },
     },
   },
   {
@@ -56,7 +59,7 @@ export const bloomfieldRetailSamples = [
     description: 'Mixed bouquet (L) made with chrysanthemums, lilies, roses, spray roses, and gypsos.',
     image: `${SITE}/images/optimized/radiant-garden.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦300,000, Abuja ₦300,000, PH ₦300,000.',
+    sourceDetail: 'cityPrices — Lagos ₦300,000, Abuja ₦300,000, PH ₦300,000.',
     prices: {
       lagos: { type: 'fixed', amount: 300000 },
       abuja: { type: 'fixed', amount: 300000 },
@@ -71,7 +74,7 @@ export const bloomfieldRetailSamples = [
     description: 'Five fresh roses beautifully accented with fillers.',
     image: `${SITE}/images/5_red_roses.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦40,000, Abuja ₦45,000, PH ₦45,000.',
+    sourceDetail: 'cityPrices — Lagos ₦40,000, Abuja ₦45,000, PH ₦45,000.',
     prices: {
       lagos: { type: 'fixed', amount: 40000 },
       abuja: { type: 'fixed', amount: 45000 },
@@ -86,7 +89,7 @@ export const bloomfieldRetailSamples = [
     description: 'A bold arrangement of 50 fresh red roses.',
     image: `${SITE}/images/50_red_roses.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦350,000, Abuja ₦400,000, PH ₦400,000.',
+    sourceDetail: 'cityPrices — Lagos ₦350,000, Abuja ₦400,000, PH ₦400,000.',
     prices: {
       lagos: { type: 'fixed', amount: 350000 },
       abuja: { type: 'fixed', amount: 400000 },
@@ -101,9 +104,11 @@ export const bloomfieldRetailSamples = [
     description: 'Fresh roses beautifully paired with gypso fillers.',
     image: `${SITE}/images/roses_with_fillers.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦94,000.',
+    sourceDetail: 'Flat ₦94,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 94000 },
+      lagos: { type: 'fixed', amount: 94000 },
+      abuja: { type: 'fixed', amount: 94000 },
+      portHarcourt: { type: 'fixed', amount: 94000 },
     },
   },
   {
@@ -114,9 +119,11 @@ export const bloomfieldRetailSamples = [
     description: 'A delicate mixed bouquet of chrysanthemums and roses.',
     image: `${SITE}/images/the_seraphina.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦55,000.',
+    sourceDetail: 'Flat ₦55,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 55000 },
+      lagos: { type: 'fixed', amount: 55000 },
+      abuja: { type: 'fixed', amount: 55000 },
+      portHarcourt: { type: 'fixed', amount: 55000 },
     },
   },
   {
@@ -127,9 +134,11 @@ export const bloomfieldRetailSamples = [
     description: 'A large, lush bouquet of mixed chrysanthemums in soft pastel tones.',
     image: `${SITE}/images/pastel_cloud.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦160,000.',
+    sourceDetail: 'Flat ₦160,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 160000 },
+      lagos: { type: 'fixed', amount: 160000 },
+      abuja: { type: 'fixed', amount: 160000 },
+      portHarcourt: { type: 'fixed', amount: 160000 },
     },
   },
   {
@@ -140,9 +149,11 @@ export const bloomfieldRetailSamples = [
     description: 'A premium mixed flower arrangement presented in a luxury box.',
     image: `${SITE}/images/mixed_box_bouquet.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦500,000.',
+    sourceDetail: 'Flat ₦500,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 500000 },
+      lagos: { type: 'fixed', amount: 500000 },
+      abuja: { type: 'fixed', amount: 500000 },
+      portHarcourt: { type: 'fixed', amount: 500000 },
     },
   },
   {
@@ -153,9 +164,11 @@ export const bloomfieldRetailSamples = [
     description: 'A medium-sized bouquet of lush spray roses.',
     image: `${SITE}/images/bloom_no_1.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦170,000.',
+    sourceDetail: 'Flat ₦170,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 170000 },
+      lagos: { type: 'fixed', amount: 170000 },
+      abuja: { type: 'fixed', amount: 170000 },
+      portHarcourt: { type: 'fixed', amount: 170000 },
     },
   },
   {
@@ -166,9 +179,11 @@ export const bloomfieldRetailSamples = [
     description: 'A sweet small bouquet combining chrysanthemums and spray roses.',
     image: `${SITE}/images/bloom_no_2.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦75,000.',
+    sourceDetail: 'Flat ₦75,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 75000 },
+      lagos: { type: 'fixed', amount: 75000 },
+      abuja: { type: 'fixed', amount: 75000 },
+      portHarcourt: { type: 'fixed', amount: 75000 },
     },
   },
   {
@@ -179,9 +194,11 @@ export const bloomfieldRetailSamples = [
     description: 'A serene medium-sized white chrysanthemum bouquet for condolences.',
     image: `${SITE}/images/condolence_flowers.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦85,000.',
+    sourceDetail: 'Flat ₦85,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 85000 },
+      lagos: { type: 'fixed', amount: 85000 },
+      abuja: { type: 'fixed', amount: 85000 },
+      portHarcourt: { type: 'fixed', amount: 85000 },
     },
   },
   {
@@ -192,9 +209,11 @@ export const bloomfieldRetailSamples = [
     description: 'A grand large bouquet of mixed spray roses in rich, vibrant tones.',
     image: `${SITE}/images/rose_royale.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦440,000.',
+    sourceDetail: 'Flat ₦440,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 440000 },
+      lagos: { type: 'fixed', amount: 440000 },
+      abuja: { type: 'fixed', amount: 440000 },
+      portHarcourt: { type: 'fixed', amount: 440000 },
     },
   },
   {
@@ -205,9 +224,11 @@ export const bloomfieldRetailSamples = [
     description: 'The ultimate luxury statement with 250 large, fresh premium roses.',
     image: `${SITE}/images/250_premium_roses.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦2,000,000.',
+    sourceDetail: 'Flat ₦2,000,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 2000000 },
+      lagos: { type: 'fixed', amount: 2000000 },
+      abuja: { type: 'fixed', amount: 2000000 },
+      portHarcourt: { type: 'fixed', amount: 2000000 },
     },
   },
   {
@@ -218,9 +239,11 @@ export const bloomfieldRetailSamples = [
     description: 'Mixed bouquet (L) made with 20 roses, 3 spray roses, 6 lilies, and gypso fillers.',
     image: `${SITE}/images/optimized/pastel-cloud.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback range ₦210,000 – ₦250,000.',
+    sourceDetail: 'Range ₦210,000–₦250,000 (no cityPrices). Lagos = lower bound, Abuja/PH = upper bound per site convention.',
     prices: {
-      retail: { type: 'range', min: 210000, max: 250000 },
+      lagos: { type: 'fixed', amount: 210000 },
+      abuja: { type: 'fixed', amount: 250000 },
+      portHarcourt: { type: 'fixed', amount: 250000 },
     },
   },
   {
@@ -231,9 +254,11 @@ export const bloomfieldRetailSamples = [
     description: 'A compact, feminine take on the Barbie Deluxe with the same signature look in a smaller size.',
     image: `${SITE}/images/barbie_deluxe_small.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦100,000.',
+    sourceDetail: 'Flat ₦100,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 100000 },
+      lagos: { type: 'fixed', amount: 100000 },
+      abuja: { type: 'fixed', amount: 100000 },
+      portHarcourt: { type: 'fixed', amount: 100000 },
     },
   },
   {
@@ -244,9 +269,11 @@ export const bloomfieldRetailSamples = [
     description: 'A full, large bouquet of mixed spray roses, chrysanthemums, and complementary blooms.',
     image: `${SITE}/images/mixed_spray_rose.jpg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦660,000.',
+    sourceDetail: 'Flat ₦660,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 660000 },
+      lagos: { type: 'fixed', amount: 660000 },
+      abuja: { type: 'fixed', amount: 660000 },
+      portHarcourt: { type: 'fixed', amount: 660000 },
     },
   },
   {
@@ -257,9 +284,11 @@ export const bloomfieldRetailSamples = [
     description: 'A bold large bouquet of red and white roses elegantly accented with gypso.',
     image: `${SITE}/images/scarlet_and_snow.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'No confirmed city-level price. Retail fallback ₦580,000.',
+    sourceDetail: 'Flat ₦580,000 in catalog (no city breakdown). Applied uniformly across cities.',
     prices: {
-      retail: { type: 'fixed', amount: 580000 },
+      lagos: { type: 'fixed', amount: 580000 },
+      abuja: { type: 'fixed', amount: 580000 },
+      portHarcourt: { type: 'fixed', amount: 580000 },
     },
   },
   {
@@ -270,7 +299,7 @@ export const bloomfieldRetailSamples = [
     description: 'A bright sunflower bouquet with a warm, happy glow. Available in Lagos only.',
     image: `${SITE}/images/products/sunflower-bouquet/sunflower-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦55,000. Abuja and PH not available.',
+    sourceDetail: 'cityPrices — Lagos ₦55,000 only. Abuja and PH not listed in catalog.',
     prices: {
       lagos: { type: 'fixed', amount: 55000 },
     },
@@ -283,7 +312,7 @@ export const bloomfieldRetailSamples = [
     description: 'A lush Bloomfield statement bouquet made for birthdays, romance, and unforgettable moments.',
     image: `${SITE}/images/products/bloom-special-bouquet/bloom-special-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦420,000, Abuja ₦420,000, PH ₦420,000.',
+    sourceDetail: 'cityPrices — Lagos ₦420,000, Abuja ₦420,000, PH ₦420,000.',
     prices: {
       lagos: { type: 'fixed', amount: 420000 },
       abuja: { type: 'fixed', amount: 420000 },
@@ -298,7 +327,7 @@ export const bloomfieldRetailSamples = [
     description: 'A sweet mixed chrysanthemum bouquet with fresh colour and a gentle gift-ready shape.',
     image: `${SITE}/images/products/mixed-chrysanthemum-bouquet/mixed-chrysanthemum-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦75,000, Abuja ₦85,000, PH ₦75,000.',
+    sourceDetail: 'cityPrices — Lagos ₦75,000, Abuja ₦85,000, PH ₦75,000.',
     prices: {
       lagos: { type: 'fixed', amount: 75000 },
       abuja: { type: 'fixed', amount: 85000 },
@@ -313,7 +342,7 @@ export const bloomfieldRetailSamples = [
     description: 'A bold pink rose bouquet styled for romantic birthdays, sweet apologies, anniversaries, and main-character gifting.',
     image: `${SITE}/images/products/stargirl-bouquet/stargirl-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦250,000, Abuja ₦260,000, PH ₦260,000.',
+    sourceDetail: 'cityPrices — Lagos ₦250,000, Abuja ₦260,000, PH ₦260,000.',
     prices: {
       lagos: { type: 'fixed', amount: 250000 },
       abuja: { type: 'fixed', amount: 260000 },
@@ -328,7 +357,7 @@ export const bloomfieldRetailSamples = [
     description: 'A luxury 150 spray rose bouquet for milestone gifting, proposals, premium birthdays, and big romantic gestures.',
     image: `${SITE}/images/products/spray-roses-large-150/spray-roses-large-150-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦1,300,000, Abuja ₦1,400,000, PH ₦1,400,000.',
+    sourceDetail: 'cityPrices — Lagos ₦1,300,000, Abuja ₦1,400,000, PH ₦1,400,000.',
     prices: {
       lagos: { type: 'fixed', amount: 1300000 },
       abuja: { type: 'fixed', amount: 1400000 },
@@ -343,7 +372,7 @@ export const bloomfieldRetailSamples = [
     description: 'A generous spray rose bouquet with rich colour, full texture, and a polished Bloomfield finish.',
     image: `${SITE}/images/products/spray-roses-large-100/spray-roses-large-100-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦800,000, Abuja ₦850,000, PH ₦850,000.',
+    sourceDetail: 'cityPrices — Lagos ₦800,000, Abuja ₦850,000, PH ₦850,000.',
     prices: {
       lagos: { type: 'fixed', amount: 800000 },
       abuja: { type: 'fixed', amount: 850000 },
@@ -358,7 +387,7 @@ export const bloomfieldRetailSamples = [
     description: 'A colourful mixed bouquet with warm yellow accents, lilies, and soft fillers for cheerful gifting.',
     image: `${SITE}/images/products/sunnyside-bouquet/sunnyside-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦150,000, Abuja ₦170,000, PH ₦170,000.',
+    sourceDetail: 'cityPrices — Lagos ₦150,000, Abuja ₦170,000, PH ₦170,000.',
     prices: {
       lagos: { type: 'fixed', amount: 150000 },
       abuja: { type: 'fixed', amount: 170000 },
@@ -373,7 +402,7 @@ export const bloomfieldRetailSamples = [
     description: 'A sweet birthday package with a fresh bouquet and balloon, made to feel joyful and personal.',
     image: `${SITE}/images/products/birthday-combo/birthday-combo-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦140,000, Abuja ₦180,000, PH ₦180,000.',
+    sourceDetail: 'cityPrices — Lagos ₦140,000, Abuja ₦180,000, PH ₦180,000.',
     prices: {
       lagos: { type: 'fixed', amount: 140000 },
       abuja: { type: 'fixed', amount: 180000 },
@@ -388,7 +417,7 @@ export const bloomfieldRetailSamples = [
     description: 'A lush box garden arrangement with layered blooms, soft colour, and a polished gift-ready presentation.',
     image: `${SITE}/images/products/box-garden-bouquet/box-garden-bouquet-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦200,000, Abuja ₦250,000, PH ₦250,000.',
+    sourceDetail: 'cityPrices — Lagos ₦200,000, Abuja ₦250,000, PH ₦250,000.',
     prices: {
       lagos: { type: 'fixed', amount: 200000 },
       abuja: { type: 'fixed', amount: 250000 },
@@ -403,7 +432,7 @@ export const bloomfieldRetailSamples = [
     description: 'A refined 40-rose bouquet finished with eucalyptus-inspired greenery for a fresh romantic style.',
     image: `${SITE}/images/products/roses-n-greens/roses-n-greens-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦320,000, Abuja ₦340,000, PH ₦340,000.',
+    sourceDetail: 'cityPrices — Lagos ₦320,000, Abuja ₦340,000, PH ₦340,000.',
     prices: {
       lagos: { type: 'fixed', amount: 320000 },
       abuja: { type: 'fixed', amount: 340000 },
@@ -418,7 +447,7 @@ export const bloomfieldRetailSamples = [
     description: 'A lovely mix of lilies and roses, styled for birthdays, romance, appreciation, and everyday gifting.',
     image: `${SITE}/images/products/lily-n-rose/lily-n-rose-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦100,000, Abuja ₦100,000, PH ₦100,000.',
+    sourceDetail: 'cityPrices — Lagos ₦100,000, Abuja ₦100,000, PH ₦100,000.',
     prices: {
       lagos: { type: 'fixed', amount: 100000 },
       abuja: { type: 'fixed', amount: 100000 },
@@ -433,7 +462,7 @@ export const bloomfieldRetailSamples = [
     description: 'A charming spray rose bouquet with gentle colour and a neat Bloomfield wrap.',
     image: `${SITE}/images/products/spray-roses/spray-roses-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦130,000, Abuja ₦150,000, PH ₦150,000.',
+    sourceDetail: 'cityPrices — Lagos ₦130,000, Abuja ₦150,000, PH ₦150,000.',
     prices: {
       lagos: { type: 'fixed', amount: 130000 },
       abuja: { type: 'fixed', amount: 150000 },
@@ -448,7 +477,7 @@ export const bloomfieldRetailSamples = [
     description: 'A fuller spray rose bouquet with playful colour and a gift-ready Bloomfield finish.',
     image: `${SITE}/images/products/spray-rose-2/spray-rose-2-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦160,000, Abuja ₦170,000, PH ₦170,000.',
+    sourceDetail: 'cityPrices — Lagos ₦160,000, Abuja ₦170,000, PH ₦170,000.',
     prices: {
       lagos: { type: 'fixed', amount: 160000 },
       abuja: { type: 'fixed', amount: 170000 },
@@ -463,7 +492,7 @@ export const bloomfieldRetailSamples = [
     description: 'A romantic 60-rose bouquet with a soft premium look, made for polished luxury gifting.',
     image: `${SITE}/images/products/pearl-roses-60/pearl-roses-60-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦450,000, Abuja ₦520,000, PH ₦520,000.',
+    sourceDetail: 'cityPrices — Lagos ₦450,000, Abuja ₦520,000, PH ₦520,000.',
     prices: {
       lagos: { type: 'fixed', amount: 450000 },
       abuja: { type: 'fixed', amount: 520000 },
@@ -478,7 +507,7 @@ export const bloomfieldRetailSamples = [
     description: 'A graceful mixed lily bouquet with soft colours, fresh texture, and a refined gift-ready wrap.',
     image: `${SITE}/images/products/mixed-lily/mixed-lily-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦150,000, Abuja ₦150,000, PH ₦150,000.',
+    sourceDetail: 'cityPrices — Lagos ₦150,000, Abuja ₦150,000, PH ₦150,000.',
     prices: {
       lagos: { type: 'fixed', amount: 150000 },
       abuja: { type: 'fixed', amount: 150000 },
@@ -493,7 +522,7 @@ export const bloomfieldRetailSamples = [
     description: 'A fuller chrysanthemum arrangement with elegant volume and a soft Bloomfield presentation.',
     image: `${SITE}/images/products/grand-chrysanthemum/grand-chrysanthemum-01.jpeg`,
     source: 'bloomfield-flowers-site/src/catalog.js',
-    sourceDetail: 'Lagos ₦180,000, Abuja ₦210,000, PH ₦180,000.',
+    sourceDetail: 'cityPrices — Lagos ₦180,000, Abuja ₦210,000, PH ₦180,000.',
     prices: {
       lagos: { type: 'fixed', amount: 180000 },
       abuja: { type: 'fixed', amount: 210000 },
