@@ -51,17 +51,27 @@ function normalizeMarketImport(importData = {}) {
         .map((record) => normalizeOverrideRecord(record, 'abuja'))
         .filter(Boolean),
     },
+    portHarcourt: {
+      source: 'Drop confirmed PH rows into marketOverrides.import.json or replace this array directly.',
+      products: toArray(importData.portHarcourt)
+        .map((record) => normalizeOverrideRecord(record, 'portHarcourt'))
+        .filter(Boolean),
+    },
   }
 }
 
 export const marketOverrideImportTemplate = {
   instructions:
-    'Paste confirmed Lagos and Abuja sale-price rows here. Keep only confirmed values and leave missing markets empty so the app falls back to retail visibly.',
+    'Paste confirmed Lagos, Abuja, and PH sale-price rows here. Keep only confirmed values and leave missing markets empty so the app falls back to retail visibly.',
   lagos: [
     { sku: 'BBF-PCL-S', price: priceShapeExamples.range },
     { sku: 'BBF-BRB-DLX-M', price: priceShapeExamples.fixed },
   ],
   abuja: [
+    { sku: 'BBF-PCL-S', price: priceShapeExamples.range },
+    { sku: 'BBF-BRB-DLX-M', price: priceShapeExamples.fixed },
+  ],
+  portHarcourt: [
     { sku: 'BBF-PCL-S', price: priceShapeExamples.range },
     { sku: 'BBF-BRB-DLX-M', price: priceShapeExamples.fixed },
   ],
@@ -72,4 +82,5 @@ export const bloomfieldMarketOverrides = normalizeMarketImport(marketOverrideImp
 export const marketOverrideStatus = {
   lagos: bloomfieldMarketOverrides.lagos.products.length,
   abuja: bloomfieldMarketOverrides.abuja.products.length,
+  portHarcourt: bloomfieldMarketOverrides.portHarcourt.products.length,
 }

@@ -1,5 +1,5 @@
 {
-  "instructions": "Paste confirmed Lagos and Abuja sale-price rows here. Keep only confirmed values. Leave arrays empty when a market override is not available yet.",
+  "instructions": "Paste confirmed Lagos, Abuja, and PH sale-price rows here. Keep only confirmed values. Leave arrays empty when a market override is not available yet.",
   "lagos": [
     {
       "sku": "BBF-CNT-ROS-100",
@@ -43,5 +43,6 @@
       "price": { "type": "fixed", "amount": 300000 },
       "evidence": "Abuja Price List row 9, Mixed bouquet (L), RETAIL PRICE ₦300,000"
     }
-  ]
+  ],
+  "portHarcourt": []
 }

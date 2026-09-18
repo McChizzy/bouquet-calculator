@@ -6,6 +6,7 @@ import { bloomfieldRetailSamples } from './sources/bloomfieldRetailSamples'
 const cities = [
   { id: 'lagos', label: 'Lagos' },
   { id: 'abuja', label: 'Abuja' },
+  { id: 'portHarcourt', label: 'PH' },
 ]
 
 const priceBandOptions = [

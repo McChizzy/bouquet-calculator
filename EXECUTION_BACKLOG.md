@@ -59,7 +59,7 @@ Build status:
 ### Partially implemented
 - [~] Mixed bouquet pricing
   - Current state: component subtotaling works
-  - Gap: packaging fee and arrangement premium are not yet first-class controls
+  - Latest: packaging fee and arrangement premium are now first-class controls
 - [~] Range handling
   - Current state: supported for catalog pricing
   - Gap: operator guidance for when to use low vs standard vs premium is not documented in-product
@@ -68,8 +68,6 @@ Build status:
   - Gap: no explicit quote validity selector beyond fixed copy text
 
 ### Not implemented yet
-- [ ] Packaging fee control
-- [ ] Arrangement/design premium control
 - [ ] Saved quotes
 - [ ] Quote history / search
 - [ ] Admin pricing editor
@@ -171,8 +169,8 @@ That gives Bloomfield a more realistic real-world quoting flow without dragging 
 
 ## Strong recommendation
 Do **not** jump to customer self-serve yet.
-The internal quoting flow still needs two core florist controls:
+The internal quoting flow now has the two core florist controls it was missing:
 - packaging fee
 - arrangement premium
 
-Without those, the quote engine is useful but still slightly too rigid for daily sales use.
+The next best improvement is mixed bouquet operator UX: better composition scanning, quote history/search, and pricing admin polish.

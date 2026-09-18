@@ -30,7 +30,8 @@ export function getPriceBandLabel(band) {
 }
 
 export function getCityLabel(city) {
-  return formatLabel(city)
+  const spaced = String(city).replace(/([a-z])([A-Z])/g, '$1 $2')
+  return formatLabel(spaced)
 }
 
 export function getPricingEntry(item, city) {
@@ -157,6 +158,9 @@ export function createQuoteSummary({
   customSelections,
   quantity,
   band,
+  packagingFee = 0,
+  arrangementPremiumMode = 'flat',
+  arrangementPremiumValue = 0,
   deliveryFee,
   discountPercent,
 }) {
@@ -228,9 +232,21 @@ export function createQuoteSummary({
       })
   }
 
+  const resolvedPackagingFee = Math.max(0, Number(packagingFee) || 0)
+  const resolvedArrangementValue = Math.max(0, Number(arrangementPremiumValue) || 0)
+  const arrangementPremiumAmount = arrangementPremiumMode === 'percent'
+    ? Math.round(subtotal * (resolvedArrangementValue / 100))
+    : resolvedArrangementValue
   const discountAmount = Math.round(subtotal * ((discountPercent || 0) / 100))
 
   const adjustments = [
+    { label: 'Packaging fee', amount: resolvedPackagingFee },
+    {
+      label: arrangementPremiumMode === 'percent'
+        ? `Arrangement premium (${formatPercentage(resolvedArrangementValue)})`
+        : 'Arrangement premium',
+      amount: arrangementPremiumAmount,
+    },
     { label: 'Delivery', amount: deliveryFee },
     { label: `Discount (${formatPercentage(discountPercent || 0)})`, amount: -discountAmount },
   ].filter((item) => item.amount !== 0)
@@ -245,6 +261,10 @@ export function createQuoteSummary({
     notes,
     city: getCityLabel(city),
     quoteType,
+    packagingFee: resolvedPackagingFee,
+    arrangementPremiumMode,
+    arrangementPremiumValue: resolvedArrangementValue,
+    arrangementPremiumAmount,
     discountAmount,
     discountPercent: discountPercent || 0,
   }

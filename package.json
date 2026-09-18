@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "apps-script:bootstrap": "bash ./apps-script/bootstrap.sh",
+    "apps-script:pull": "cd ./apps-script && clasp pull",
+    "apps-script:push": "cd ./apps-script && clasp push",
+    "apps-script:status": "cd ./apps-script && clasp status"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",

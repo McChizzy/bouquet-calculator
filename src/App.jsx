@@ -23,11 +23,12 @@ import {
 } from './lib/pricing'
 
 const { cities, priceBandOptions, quoteTypes } = pricingCatalog
+const cityMarketIds = cities.map((item) => item.id)
 const SAVED_QUOTES_STORAGE_KEY = 'bloomfield-saved-quotes'
 const SAVED_INVOICES_STORAGE_KEY = 'bloomfield-saved-invoices'
 const COMPANY_PROFILE_STORAGE_KEY = 'bloomfield-company-profile'
 const ORDER_NUMBER_STORAGE_KEY = 'bloomfield-income-order-number'
-const SALES_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxZ_5ZqSnF_mBjFjR97jf8C83rkyqzJRdxFSG5k1SG91buXG0N-fKsb-Vnx3eVTBz9f/exec'
+const SALES_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz4KfFs7rY9Oc0J3trwvStjpBMAIwb_F5P6FSzGvAaBUJTCnFGdDQ62_ADLE0S-j6Fhug/exec'
 const DEFAULT_COMPANY_PROFILE = {
   companyPhone: '+2347011203325',
   companyInstagram: 'bloomfieldflowers_',
@@ -38,6 +39,10 @@ const CUSTOM_PRICES_DRAFT_STORAGE_KEY = 'bloomfield-custom-prices-draft'
 const ADMIN_LAST_APPLIED_STORAGE_KEY = 'bloomfield-admin-last-applied'
 const deliveryOptions = Array.from({ length: 59 }, (_, index) => 1000 + (index * 500))
 const discountOptions = [5, 10, 15, 20, 25, 30]
+const arrangementPremiumModeOptions = [
+  { id: 'flat', label: 'Flat amount' },
+  { id: 'percent', label: 'Percentage' },
+]
 const saleExportTargetOptions = [
   { id: 'csv', label: 'Download CSV row' },
   { id: 'json', label: 'Copy JSON payload' },
@@ -411,7 +416,7 @@ function validateMarketOverrideDraft(parsed) {
   const warnings = []
   const seen = new Set()
 
-  for (const market of ['lagos', 'abuja']) {
+  for (const market of cityMarketIds) {
     const rows = Array.isArray(parsed?.[market]) ? parsed[market] : []
     rows.forEach((row, index) => {
       const rowLabel = `${market} row ${index + 1}`
@@ -454,12 +459,12 @@ function validateCustomPriceDraft(parsed) {
     if (!row?.sku) errors.push(`${rowLabel}: missing sku.`)
     if (!row?.name) errors.push(`${rowLabel}: missing name.`)
 
-    const hasAnyPrice = ['lagos', 'abuja'].some((market) => row?.prices?.[market])
+    const hasAnyPrice = cityMarketIds.some((market) => row?.prices?.[market])
     if (!hasAnyPrice) {
-      errors.push(`${rowLabel} (${row?.name || row?.sku || 'unknown'}): missing both Lagos and Abuja prices.`)
+      errors.push(`${rowLabel} (${row?.name || row?.sku || 'unknown'}): missing all city prices.`)
     }
 
-    for (const market of ['lagos', 'abuja']) {
+    for (const market of cityMarketIds) {
       if (row?.prices?.[market] && !isValidPriceShape(row.prices[market])) {
         errors.push(`${rowLabel} (${row?.sku || 'unknown'}): invalid ${market} price shape.`)
       }
@@ -493,9 +498,13 @@ function App() {
   const [quantity, setQuantity] = useState(1)
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [discountPercent, setDiscountPercent] = useState(0)
+  const [packagingFee, setPackagingFee] = useState(0)
+  const [arrangementPremiumMode, setArrangementPremiumMode] = useState('flat')
+  const [arrangementPremiumValue, setArrangementPremiumValue] = useState('')
   const [validityPreset, setValidityPreset] = useState('24h')
   const [customValidityNote, setCustomValidityNote] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [customerInstagramHandle, setCustomerInstagramHandle] = useState('')
   const [recipientName, setRecipientName] = useState('')
   const [occasion, setOccasion] = useState('')
   const [showWholesaleQuote, setShowWholesaleQuote] = useState(false)
@@ -544,10 +553,13 @@ function App() {
         customSelections,
         quantity,
         band,
+        packagingFee,
+        arrangementPremiumMode,
+        arrangementPremiumValue,
         deliveryFee,
         discountPercent,
       }),
-    [band, city, customSelections, deliveryFee, discountPercent, quantity, quoteType, selectedCatalog],
+    [arrangementPremiumMode, arrangementPremiumValue, band, city, customSelections, deliveryFee, discountPercent, packagingFee, quantity, quoteType, selectedCatalog],
   )
 
   const manualOverrideValue = Number(manualOverrideTotal)
@@ -883,10 +895,15 @@ function App() {
       deliveryStatus: '',
       netProfit: '',
       customerName: customerName || '',
+      igHandle: customerInstagramHandle || '',
       recipientName: recipientName || '',
       occasion: occasion || '',
       quoteType,
       saleSubtotal: summary.subtotal,
+      packagingFee: summary.packagingFee,
+      arrangementPremiumMode: summary.arrangementPremiumMode,
+      arrangementPremiumValue: summary.arrangementPremiumValue,
+      arrangementPremiumAmount: summary.arrangementPremiumAmount,
       discountPercent,
       discountAmount: summary.discountAmount,
       costPriceStatus: wholesaleHasGaps ? 'partial_or_missing' : 'confirmed',
@@ -896,11 +913,11 @@ function App() {
       validityNote,
       syncHint: 'Use this payload with Excel/Notion automation via Make, Zapier, Power Automate, or a webhook endpoint.',
     }
-  }, [bouquetTypeLabel, city, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, orderDescription, orderNumber, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
+  }, [bouquetTypeLabel, city, customerInstagramHandle, customerName, deliveryFee, discountPercent, effectiveTotal, invoiceNumber, occasion, orderDescription, orderNumber, quoteId, quoteType, recipientName, summary, validityNote, wholesaleSummary])
 
   const saleExportCsv = useMemo(() => {
     const headers = [
-      'Date','Description','Bouquet Type','Location','Cost Amount','Sale Price','Other Expenses','Profit','Comments(for other expenses)','Delivery Date','Delivery Status','Net Profit'
+      'Date','Description','Bouquet Type','Location','Cost Amount','Sale Price','Other Expenses','Profit','Comments(for other expenses)','Delivery Date','Delivery Status','Net Profit','IG handle'
     ]
     const values = [
       saleExportRecord.date,
@@ -915,6 +932,7 @@ function App() {
       saleExportRecord.deliveryDate,
       saleExportRecord.deliveryStatus,
       saleExportRecord.netProfit,
+      saleExportRecord.igHandle,
     ]
     const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
     return `${headers.join(',')}\n${values.map(escape).join(',')}`
@@ -1132,9 +1150,13 @@ function App() {
       quantity,
       deliveryFee,
       discountPercent,
+      packagingFee,
+      arrangementPremiumMode,
+      arrangementPremiumValue,
       validityPreset,
       customValidityNote,
       customerName,
+      customerInstagramHandle,
       recipientName,
       occasion,
       manualOverrideEnabled,
@@ -1290,9 +1312,13 @@ function App() {
     setQuantity(savedQuote.quantity || 1)
     setDeliveryFee(savedQuote.deliveryFee || 0)
     setDiscountPercent(savedQuote.discountPercent || 0)
+    setPackagingFee(savedQuote.packagingFee || savedQuote.saleExportRecord?.packagingFee || 0)
+    setArrangementPremiumMode(savedQuote.arrangementPremiumMode || savedQuote.saleExportRecord?.arrangementPremiumMode || 'flat')
+    setArrangementPremiumValue(savedQuote.arrangementPremiumValue ?? savedQuote.saleExportRecord?.arrangementPremiumValue ?? '')
     setValidityPreset(savedQuote.validityPreset || '24h')
     setCustomValidityNote(savedQuote.customValidityNote || '')
     setCustomerName(savedQuote.customerName || '')
+    setCustomerInstagramHandle(savedQuote.customerInstagramHandle || savedQuote.saleExportRecord?.igHandle || '')
     setRecipientName(savedQuote.recipientName || '')
     setOccasion(savedQuote.occasion || '')
     setShowWholesaleQuote(false)
@@ -1440,7 +1466,7 @@ function App() {
           <div>
             <p className="eyebrow">Internal MVP</p>
             <h1>Bloomfield bouquet calculator</h1>
-            <p className="muted">Catalogue and custom quoting, centered on Lagos and Abuja pricing with Bloomfield sheet-backed custom flower rates.</p>
+            <p className="muted">Catalogue and custom quoting, centered on Lagos, Abuja, and PH pricing with Bloomfield sheet-backed custom flower rates.</p>
           </div>
 
           <div className="stack-gap compact" style={{ alignItems: 'flex-end' }}>
@@ -1612,7 +1638,7 @@ function App() {
               <div className="section-heading compact-heading">
                 <p className="eyebrow">Step 2</p>
                 <h2>Choose a catalogue bouquet</h2>
-                <p className="muted small">Use confirmed Lagos or Abuja overrides when available, otherwise fall back to sample retail ranges.</p>
+                <p className="muted small">Use confirmed city overrides when available, otherwise fall back to sample retail ranges.</p>
               </div>
 
               <div className="field-grid two-up">
@@ -1660,7 +1686,7 @@ function App() {
                           <strong>{status.label}</strong>
                           <p>{status.detail}</p>
                         </div>
-                        <p className="muted small">{city === 'lagos' ? 'Lagos' : 'Abuja'} pricing • {resolved.selectionLabel}</p>
+                        <p className="muted small">{getCityLabel(city)} pricing • {resolved.selectionLabel}</p>
                       </div>
                     </article>
                   </section>
@@ -1849,6 +1875,12 @@ function App() {
                 <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Chikezie" />
               </label>
               <label>
+                <span>IG handle</span>
+                <input value={customerInstagramHandle} onChange={(event) => setCustomerInstagramHandle(event.target.value)} placeholder="@customer_handle" />
+              </label>
+            </div>
+            <div className="field-grid two-up">
+              <label>
                 <span>Recipient</span>
                 <input value={recipientName} onChange={(event) => setRecipientName(event.target.value)} placeholder="Tosin" />
               </label>
@@ -1898,6 +1930,38 @@ function App() {
                 />
               </label>
             )}
+            <div className="field-grid two-up">
+              <label>
+                <span>Packaging fee</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="500"
+                  value={packagingFee}
+                  onChange={(event) => setPackagingFee(Math.max(0, Number(event.target.value) || 0))}
+                  placeholder="5000"
+                />
+              </label>
+              <label>
+                <span>Arrangement premium type</span>
+                <select value={arrangementPremiumMode} onChange={(event) => setArrangementPremiumMode(event.target.value)}>
+                  {arrangementPremiumModeOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>{arrangementPremiumMode === 'percent' ? 'Arrangement premium %' : 'Arrangement premium amount'}</span>
+              <input
+                type="number"
+                min="0"
+                step={arrangementPremiumMode === 'percent' ? '1' : '500'}
+                value={arrangementPremiumValue}
+                onChange={(event) => setArrangementPremiumValue(event.target.value)}
+                placeholder={arrangementPremiumMode === 'percent' ? '15' : '10000'}
+              />
+            </label>
             <div className="field-grid two-up">
               <label>
                 <span>Discount</span>
@@ -2217,7 +2281,7 @@ function App() {
               </label>
               <button type="button" className="secondary-button" onClick={resetAdminDrafts}>Reset to current defaults</button>
             </div>
-            <p className="muted small">Template help: Lagos/Abuja override draft follows the same shape as <span className="code-inline">marketOverrides.import.json</span>.</p>
+            <p className="muted small">Template help: Lagos/Abuja/PH override draft follows the same shape as <span className="code-inline">marketOverrides.import.json</span>.</p>
           </div>
         </details>
 

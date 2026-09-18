@@ -4,7 +4,7 @@ Internal React + Vite quoting tool for Bloomfield bouquets.
 
 ## What changed
 - Catalog mode now shows one visible card only, for the currently selected bouquet in the dropdown.
-- Catalog pricing presentation now centers Lagos and Abuja, with sample fallback messaging kept secondary.
+- Catalog pricing presentation now centers Lagos, Abuja, and PH, with sample fallback messaging kept secondary.
 - Custom flower pricing no longer uses the old seed values in `src/data/pricing.js`.
 - Custom flower prices now come from the Google Sheet tab `Bloomfield Retail price list` where rows were confirmed.
 - UI source notes now document both the old custom-price source and the new sheet-backed source.
@@ -31,11 +31,11 @@ Exact tab used:
 - `Bloomfield Retail price list`
 
 Exact extracted rows used:
-- Roses, Lagos `₦7,000`, Abuja `₦8,000`
-- Spray Roses, Lagos `₦7,500`, Abuja `₦8,000`
-- Lilies, Lagos `₦13,000`, Abuja `₦15,000`
-- Gypsophila (Gypso), Lagos `₦5,000`, Abuja `₦5,000`
-- Chrysanthemum, Lagos `₦5,000`, Abuja `₦15,000`
+- Roses, Lagos `₦7,000`, Abuja `₦8,000`, PH `₦8,000`
+- Spray Roses, Lagos `₦8,000`, Abuja `₦8,500`, PH `₦8,500`
+- Lilies, Lagos `₦13,000`, Abuja `₦15,000`, PH `₦12,000`
+- Gypsophila (Gypso), Lagos `₦5,000`, Abuja `₦5,000`, PH `₦6,000`
+- Chrysanthemum, Lagos `₦5,000`, Abuja `₦13,000`, PH `₦5,000`
 
 ## Catalog sources
 ### Sample catalog source
@@ -57,17 +57,18 @@ Current confirmed override values:
   - `BBF-RDG-L` → `₦300,000`
 
 ## Important notes
-- Catalog bouquets still fall back to the local sample catalog when a Lagos or Abuja override is missing.
-- `BBF-BFF-COL` still has no confirmed Lagos or Abuja override loaded, so it uses sample fallback visibly.
+- Catalog bouquets still fall back to the local sample catalog when a city override is missing.
+- `BBF-BFF-COL` still has no confirmed city override loaded, so it uses sample fallback visibly.
 - Custom flower pricing now uses only confirmed sheet-derived values for the flowers currently included in the custom builder.
 - No custom flower values were invented in this update.
 
 ## File structure
 - `src/data/sources/bloomfieldRetailSamples.js` stores sample catalog bouquet records.
-- `src/data/sources/marketOverrides.import.json` stores confirmed Lagos and Abuja bouquet overrides.
+- `src/data/sources/marketOverrides.import.json` stores confirmed Lagos, Abuja, and PH bouquet overrides.
 - `src/data/sources/customFlowerPrices.js` stores extracted custom flower per-stem prices from the Google Sheet.
 - `src/data/pricing.js` exports the calculator catalog.
 - `src/lib/pricing.js` resolves prices and totals.
+- `apps-script/` is the local checkout target for the Google Apps Script webhook project via `clasp`.
 
 ## Run locally
 ```bash
