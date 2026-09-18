@@ -1,7 +1,12 @@
 export const customFlowerWholesalePriceSource = {
   workbookUrl: 'https://docs.google.com/spreadsheets/d/1dq_lMoO1k5rYt9hfk79GVn2F1P2dDFIi6eE2OtoaTMs/edit?usp=drivesdk',
-  sheetName: 'Bloomfield wholesale price list',
-  extractedAt: '2026-05-20',
+  sheetName: 'Bloomfield Wholesale price list',
+  extractedAt: '2026-09-18',
+  portHarcourtSource: {
+    extractedAt: '2026-09-18',
+    detail:
+      'PH wholesale prices are loaded from the Port Harcourt Prices column on the Bloomfield Wholesale price list tab. Blank PH cells are left without a portHarcourt entry so the app falls back visibly.',
+  },
 }
 
 export const customFlowerWholesalePrices = [
@@ -13,10 +18,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 1.',
-    sourceDetail: 'Roses, Lagos ₦3,500, Abuja ₦5,000.',
+    sourceDetail: 'Roses, Lagos ₦3,500, Abuja ₦5,000, PH ₦4,500.',
     prices: {
       lagos: { type: 'fixed', amount: 3500 },
       abuja: { type: 'fixed', amount: 5000 },
+      portHarcourt: { type: 'fixed', amount: 4500 },
     },
   },
   {
@@ -27,10 +33,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 2.',
-    sourceDetail: 'Spray Roses, Lagos ₦3,500, Abuja ₦6,000.',
+    sourceDetail: 'Spray Roses, Lagos ₦3,500, Abuja ₦6,000, PH ₦5,000.',
     prices: {
       lagos: { type: 'fixed', amount: 3500 },
       abuja: { type: 'fixed', amount: 6000 },
+      portHarcourt: { type: 'fixed', amount: 5000 },
     },
   },
   {
@@ -41,10 +48,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 3.',
-    sourceDetail: 'Lilies, Lagos ₦10,000, Abuja ₦12,000.',
+    sourceDetail: 'Lilies, Lagos ₦10,000, Abuja ₦12,000, PH ₦7,500.',
     prices: {
       lagos: { type: 'fixed', amount: 10000 },
       abuja: { type: 'fixed', amount: 12000 },
+      portHarcourt: { type: 'fixed', amount: 7500 },
     },
   },
   {
@@ -55,7 +63,7 @@ export const customFlowerWholesalePrices = [
     category: 'greens',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 8.',
-    sourceDetail: 'Eucalyptus (Greens), Lagos ₦2,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Eucalyptus (Greens), Lagos ₦2,000. Abuja and PH blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 2000 },
     },
@@ -68,10 +76,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 5.',
-    sourceDetail: 'Gypsophila (Gypso), Lagos ₦3,500, Abuja ₦3,500.',
+    sourceDetail: 'Gypsophila (Gypso), Lagos ₦3,500, Abuja ₦3,500, PH ₦4,000.',
     prices: {
       lagos: { type: 'fixed', amount: 3500 },
       abuja: { type: 'fixed', amount: 3500 },
+      portHarcourt: { type: 'fixed', amount: 4000 },
     },
   },
   {
@@ -82,10 +91,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 6.',
-    sourceDetail: 'Carnation, Lagos ₦3,000, Abuja ₦6,000.',
+    sourceDetail: 'Carnation, Lagos ₦3,000, Abuja ₦6,000, PH ₦2,000.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
       abuja: { type: 'fixed', amount: 6000 },
+      portHarcourt: { type: 'fixed', amount: 2000 },
     },
   },
   {
@@ -96,10 +106,11 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 7.',
-    sourceDetail: 'Chrysanthemum, Lagos ₦3,000, Abuja ₦10,000.',
+    sourceDetail: 'Chrysanthemum, Lagos ₦3,000, Abuja ₦10,000, PH ₦2,500.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
       abuja: { type: 'fixed', amount: 10000 },
+      portHarcourt: { type: 'fixed', amount: 2500 },
     },
   },
   {
@@ -110,9 +121,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 9.',
-    sourceDetail: 'Hydrangea, Lagos ₦10,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Hydrangea, Lagos ₦10,000, PH ₦7,000. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 10000 },
+      portHarcourt: { type: 'fixed', amount: 7000 },
     },
   },
   {
@@ -123,9 +135,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 10.',
-    sourceDetail: 'Limonium, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Limonium, Lagos ₦3,000, PH ₦2,500. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
+      portHarcourt: { type: 'fixed', amount: 2500 },
     },
   },
   {
@@ -136,9 +149,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 11.',
-    sourceDetail: 'Sunflower, Lagos ₦5,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Sunflower, Lagos ₦5,000, PH ₦6,500. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 5000 },
+      portHarcourt: { type: 'fixed', amount: 6500 },
     },
   },
   {
@@ -149,9 +163,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 12.',
-    sourceDetail: 'Solidago, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Solidago, Lagos ₦3,000, PH ₦2,500. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
+      portHarcourt: { type: 'fixed', amount: 2500 },
     },
   },
   {
@@ -162,9 +177,10 @@ export const customFlowerWholesalePrices = [
     category: 'greens',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 13.',
-    sourceDetail: 'Ruscus (Greens), Lagos ₦2,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Ruscus (Greens), Lagos ₦2,000, PH ₦2,000. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 2000 },
+      portHarcourt: { type: 'fixed', amount: 2000 },
     },
   },
   {
@@ -175,7 +191,7 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 14.',
-    sourceDetail: 'Gerbera, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Gerbera, Lagos ₦3,000. Abuja and PH blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
     },
@@ -188,9 +204,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 15.',
-    sourceDetail: 'Kangaroo, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Kangaroo, Lagos ₦3,000, PH ₦2,500. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
+      portHarcourt: { type: 'fixed', amount: 2500 },
     },
   },
   {
@@ -201,7 +218,7 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 16.',
-    sourceDetail: 'Veronica, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Veronica, Lagos ₦3,000. Abuja and PH blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
     },
@@ -214,9 +231,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 17.',
-    sourceDetail: 'Hypericum/Berries, Lagos ₦2,500. Abuja not confirmed in sheet.',
+    sourceDetail: 'Hypericum/Berries, Lagos ₦2,500, PH ₦3,000. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 2500 },
+      portHarcourt: { type: 'fixed', amount: 3000 },
     },
   },
   {
@@ -227,9 +245,10 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 18.',
-    sourceDetail: 'Alstroemeria, Lagos ₦3,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Alstroemeria, Lagos ₦3,000, PH ₦1,500. Abuja blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 3000 },
+      portHarcourt: { type: 'fixed', amount: 1500 },
     },
   },
   {
@@ -240,9 +259,49 @@ export const customFlowerWholesalePrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield wholesale price list row 19.',
-    sourceDetail: 'Special Spray Roses, Lagos ₦4,000. Abuja not confirmed in sheet.',
+    sourceDetail: 'Special Spray Roses, Lagos ₦4,000. Abuja and PH blank in sheet.',
     prices: {
       lagos: { type: 'fixed', amount: 4000 },
+    },
+  },
+  {
+    id: 'balloon-regular',
+    sku: 'CMP-BALLOON-REG',
+    name: 'Balloon (Regular with helium)',
+    unit: 'piece',
+    category: 'balloon',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 20.',
+    sourceDetail: 'Balloons (Regular with helium), Abuja ₦6,000. Lagos and PH blank in sheet.',
+    prices: {
+      abuja: { type: 'fixed', amount: 6000 },
+    },
+  },
+  {
+    id: 'balloon-helium',
+    sku: 'CMP-BALLOON-HELIUM',
+    name: 'Balloon (Helium filled)',
+    unit: 'piece',
+    category: 'balloon',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 21.',
+    sourceDetail: 'Balloons (Helium filled), Abuja ₦15,000. Lagos and PH blank in sheet.',
+    prices: {
+      abuja: { type: 'fixed', amount: 15000 },
+    },
+  },
+  {
+    id: 'balloon-inscription',
+    sku: 'CMP-BALLOON-INSCRIPTION',
+    name: 'Balloon inscription',
+    unit: 'piece',
+    category: 'balloon',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 22.',
+    sourceDetail: 'Balloon inscription, Lagos ₦5,000, Abuja ₦5,000. PH blank in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 5000 },
+      abuja: { type: 'fixed', amount: 5000 },
     },
   },
 ]
