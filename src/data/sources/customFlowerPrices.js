@@ -63,9 +63,9 @@ export const customFlowerPrices = [
     category: 'flower',
     pricingType: 'fixed',
     source: 'Bloomfield Retail price list row 7.',
-    sourceDetail: 'Lisianthus, Lagos ₦5,500, PH ₦6,500. Abuja blank in sheet.',
+    sourceDetail: 'Lisianthus, Lagos ₦9,000, PH ₦6,500. Abuja blank in sheet.',
     prices: {
-      lagos: { type: 'fixed', amount: 5500 },
+      lagos: { type: 'fixed', amount: 9000 },
       portHarcourt: { type: 'fixed', amount: 6500 },
     },
   },

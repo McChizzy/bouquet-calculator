@@ -56,6 +56,19 @@ export const customFlowerWholesalePrices = [
     },
   },
   {
+    id: 'lisianthus',
+    sku: 'CMP-LISIANTHUS',
+    name: 'Lisianthus',
+    unit: 'stem',
+    category: 'flower',
+    pricingType: 'fixed',
+    source: 'Bloomfield wholesale price list row 4.',
+    sourceDetail: 'Lisianthus, Lagos ₦5,500. Abuja and PH blank in sheet.',
+    prices: {
+      lagos: { type: 'fixed', amount: 5500 },
+    },
+  },
+  {
     id: 'eucalyptus',
     sku: 'CMP-EUCALYPTUS',
     name: 'Eucalyptus',
