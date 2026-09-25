@@ -4,6 +4,8 @@ const SALES_ROLE = 'sales'
 const OPERATIONS_ROLE = 'operations'
 
 import bloomfieldLogo from './assets/bff-logo-p.jpeg?inline'
+import { QuoteHistoryPanel } from './components/QuoteHistoryPanel'
+import { PriceAdminPanel } from './components/PriceAdminPanel'
 import { pricingCatalog } from './data/pricing'
 import marketOverrideImport from './data/sources/marketOverrides.import.json'
 import { bloomfieldMarketOverrides, marketOverrideImportTemplate } from './data/sources/marketOverrides'
@@ -1143,6 +1145,7 @@ function App() {
     return {
       id: quoteId,
       createdAt: new Date().toISOString(),
+      orderStatus: 'pending',
       city,
       quoteType,
       selectedCatalogId,
@@ -1343,6 +1346,12 @@ function App() {
     persistSavedQuotes(nextQuotes)
   }
 
+  function updateQuoteOrderStatus(id, status) {
+    const nextQuotes = savedQuotes.map((item) => item.id === id ? { ...item, orderStatus: status } : item)
+    setSavedQuotes(nextQuotes)
+    persistSavedQuotes(nextQuotes)
+  }
+
   function updateStemCount(id, rawValue) {
     setCustomSelections((current) =>
       current.map((entry) => {
@@ -1514,46 +1523,14 @@ function App() {
         </div>
 
         {(savedQuotes.length > 0 || savedInvoices.length > 0) && (
-          <section className="panel stack-gap compact" style={{ marginTop: '12px' }}>
-            <div className="section-heading compact-heading">
-              <p className="eyebrow">Recent quotes</p>
-              <h2>Saved locally</h2>
-              <p className="muted small">Reopen recent quotes without rebuilding them from scratch.</p>
-            </div>
-            <div className="field-grid two-up">
-              <div className="stack-gap compact">
-                <p className="muted small"><strong>Quotes</strong></p>
-                {savedQuotes.length > 0 ? savedQuotes.slice(0, 5).map((item) => (
-                  <div key={item.id} className="schema-card stack-gap compact">
-                    <div className="summary-row">
-                      <strong>{item.previewLabel || 'Saved quote'}</strong>
-                      <span>{formatCurrency(item.previewTotal || 0)}</span>
-                    </div>
-                    <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.quoteType === 'catalog' ? 'Catalog' : 'Custom'} • {item.id}</p>
-                    <div className="button-row">
-                      <button type="button" className="secondary-button" onClick={() => loadSavedQuote(item)}>Open</button>
-                      <button type="button" className="secondary-button" onClick={() => deleteSavedQuote(item.id)}>Delete</button>
-                    </div>
-                  </div>
-                )) : <p className="muted small">No saved quotes yet.</p>}
-              </div>
-              {activeRole === OPERATIONS_ROLE && (
-                <div className="stack-gap compact">
-                  <p className="muted small"><strong>Invoices</strong></p>
-                  {savedInvoices.length > 0 ? savedInvoices.slice(0, 5).map((item) => (
-                    <div key={item.id} className="schema-card stack-gap compact">
-                      <div className="summary-row">
-                        <strong>{item.productLabel || 'Saved invoice'}</strong>
-                        <span>{formatCurrency(item.total || 0)}</span>
-                      </div>
-                      <p className="muted small">{getCityLabel(item.city || 'lagos')} • {item.id}</p>
-                      <p className="muted small">Saved locally for reuse.</p>
-                    </div>
-                  )) : <p className="muted small">No saved invoices yet.</p>}
-                </div>
-              )}
-            </div>
-          </section>
+          <QuoteHistoryPanel
+            savedQuotes={savedQuotes}
+            savedInvoices={savedInvoices}
+            activeRole={activeRole}
+            onLoadQuote={loadSavedQuote}
+            onDeleteQuote={deleteSavedQuote}
+            onUpdateStatus={updateQuoteOrderStatus}
+          />
         )}
 
         <section className="step-grid" aria-label="Quote workflow overview">
@@ -2231,57 +2208,21 @@ function App() {
         <details className="details-panel">
           <summary>Show admin pricing tools</summary>
           <div className="stack-gap compact details-content">
-            <div className="schema-card stack-gap compact">
-              <div className="summary-row">
-                <strong>Local pricing manager</strong>
-                <span className="muted small">Internal only</span>
-              </div>
-              <p className="muted small">Paste confirmed JSON, apply it locally, and keep quoting without editing source files directly.</p>
-              {adminLastAppliedAt ? <p className="muted small">Last applied: {new Date(adminLastAppliedAt).toLocaleString('en-NG')}</p> : null}
-              {adminFeedback ? <p className="muted small">{adminFeedback}</p> : null}
-              {adminValidation.errors.length > 0 && (
-                <div className="note-box">
-                  {adminValidation.errors.map((item) => (
-                    <p key={`error-${item}`}>Error: {item}</p>
-                  ))}
-                </div>
-              )}
-              {adminValidation.warnings.length > 0 && (
-                <div className="note-box soft-note">
-                  {adminValidation.warnings.map((item) => (
-                    <p key={`warning-${item}`}>Warning: {item}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <label>
-              <span>Market override draft JSON</span>
-              <textarea value={marketOverrideDraft} onChange={(event) => setMarketOverrideDraft(event.target.value)} rows={12} />
-            </label>
-            <div className="button-row">
-              <button type="button" className="secondary-button" onClick={applyMarketOverrideDraft}>Apply market overrides</button>
-              <button type="button" className="secondary-button" onClick={exportMarketOverrideDraft}>Download market JSON</button>
-              <label className="secondary-button compact-button file-button">
-                <span>Upload market JSON</span>
-                <input type="file" accept="application/json,.json" onChange={(event) => importDraftFile('market', event)} />
-              </label>
-            </div>
-
-            <label>
-              <span>Custom flower prices draft JSON</span>
-              <textarea value={customPricesDraft} onChange={(event) => setCustomPricesDraft(event.target.value)} rows={14} />
-            </label>
-            <div className="button-row">
-              <button type="button" className="secondary-button" onClick={applyCustomPricesDraft}>Apply custom flower prices</button>
-              <button type="button" className="secondary-button" onClick={exportCustomPricesDraft}>Download custom prices JSON</button>
-              <label className="secondary-button compact-button file-button">
-                <span>Upload custom prices JSON</span>
-                <input type="file" accept="application/json,.json" onChange={(event) => importDraftFile('custom', event)} />
-              </label>
-              <button type="button" className="secondary-button" onClick={resetAdminDrafts}>Reset to current defaults</button>
-            </div>
-            <p className="muted small">Template help: Lagos/Abuja/PH override draft follows the same shape as <span className="code-inline">marketOverrides.import.json</span>.</p>
+            <PriceAdminPanel
+              marketOverrideDraft={marketOverrideDraft}
+              customPricesDraft={customPricesDraft}
+              adminFeedback={adminFeedback}
+              adminValidation={adminValidation}
+              adminLastAppliedAt={adminLastAppliedAt}
+              onMarketOverrideDraftChange={setMarketOverrideDraft}
+              onCustomPricesDraftChange={setCustomPricesDraft}
+              onApplyMarketOverrides={applyMarketOverrideDraft}
+              onApplyCustomPrices={applyCustomPricesDraft}
+              onExportMarketOverrides={exportMarketOverrideDraft}
+              onExportCustomPrices={exportCustomPricesDraft}
+              onImportDraftFile={importDraftFile}
+              onReset={resetAdminDrafts}
+            />
           </div>
         </details>
 
