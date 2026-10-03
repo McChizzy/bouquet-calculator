@@ -1704,7 +1704,7 @@ function App() {
                 </p>
                 <div className="button-row builder-toolbar-actions">
                   <button type="button" className="secondary-button compact-button mobile-jump-button" onClick={jumpToQuoteSummary}>Go to bill / quote</button>
-                  <button type="button" className="secondary-button compact-button" onClick={resetQuote}>Clear &amp; new quote</button>
+                  <button type="button" className="secondary-button compact-button" onClick={resetQuote}>Clear flower counts</button>
                 </div>
               </div>
 
